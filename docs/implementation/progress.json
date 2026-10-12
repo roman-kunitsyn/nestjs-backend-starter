@@ -2,7 +2,7 @@
   "project": {
     "status": "preparation",
     "current_stage": "Stage 00 — Preparation",
-    "next_milestone": "M001"
+    "next_milestone": "M002"
   },
   "stages": [
     {
@@ -34,9 +34,20 @@
       "id": "M001",
       "title": "Architecture Decomposition",
       "stage": "stage-00",
-      "status": "pending",
+      "status": "completed",
       "dependencies": ["M000"],
-      "contract": "milestones/M001-architecture-decomposition.md"
+      "contract": "milestones/M001-architecture-decomposition.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Entire 2,559-line original specification reviewed",
+          "All numbered source sections mapped to focused architecture destinations",
+          "Architecture documents created with substantive requirements preserved",
+          "Source noise and truncated final sentence recorded for M002 reconciliation",
+          "Original architecture reference confirmed unchanged",
+          "Progress JSON, documentation links, and staged diff validated"
+        ]
+      }
     },
     {
       "id": "M002",
