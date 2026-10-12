@@ -2,86 +2,60 @@
   "project": {
     "status": "preparation",
     "current_stage": "Stage 00 — Preparation",
-    "next_milestone": "M003"
+    "next_milestone": "M004"
   },
   "stages": [
-    {
-      "id": "stage-00",
-      "title": "Preparation",
-      "status": "in_progress",
-      "milestones": ["M000", "M001", "M002", "M003", "M004"]
-    }
+    { "id": "stage-00", "title": "Preparation", "status": "in_progress", "milestones": ["M000", "M001", "M002", "M003", "M004"] },
+    { "id": "stage-01", "title": "Project Bootstrap", "status": "pending", "milestones": ["M005"] },
+    { "id": "stage-02", "title": "HTTP and API Foundation", "status": "pending", "milestones": ["M006", "M007"] },
+    { "id": "stage-03", "title": "Database Infrastructure", "status": "pending", "milestones": ["M008", "M009"] },
+    { "id": "stage-04", "title": "Identity and Sessions", "status": "pending", "milestones": ["M010", "M011"] },
+    { "id": "stage-05", "title": "Organizations and Authorization", "status": "pending", "milestones": ["M012", "M013", "M014"] },
+    { "id": "stage-06", "title": "Email and Audit", "status": "pending", "milestones": ["M015"] },
+    { "id": "stage-07", "title": "Example Resource", "status": "pending", "milestones": ["M016"] },
+    { "id": "stage-08", "title": "Security and Observability", "status": "pending", "milestones": ["M017", "M018"] },
+    { "id": "stage-09", "title": "Production Deployment", "status": "pending", "milestones": ["M019", "M020", "M021"] },
+    { "id": "stage-10", "title": "Final Verification", "status": "pending", "milestones": ["M022"] }
   ],
   "milestones": [
     {
-      "id": "M000",
-      "title": "Documentation Structure",
-      "stage": "stage-00",
-      "status": "completed",
-      "dependencies": [],
+      "id": "M000", "title": "Documentation Structure", "stage": "stage-00", "status": "completed", "dependencies": [],
       "contract": "milestones/M000-documentation-structure.md",
-      "completion": {
-        "date": "2026-10-13",
-        "verification": [
-          "Documentation navigation and bootstrap records inspected",
-          "Progress JSON parsed and next milestone resolved as M001",
-          "Original architecture reference confirmed unchanged",
-          "Staged diff whitespace check passed"
-        ]
-      }
+      "completion": { "date": "2026-10-13", "verification": ["Documentation paths/navigation and source preservation checked", "Bootstrap progress selection and staged diff validated"] }
     },
     {
-      "id": "M001",
-      "title": "Architecture Decomposition",
-      "stage": "stage-00",
-      "status": "completed",
-      "dependencies": ["M000"],
+      "id": "M001", "title": "Architecture Decomposition", "stage": "stage-00", "status": "completed", "dependencies": ["M000"],
       "contract": "milestones/M001-architecture-decomposition.md",
-      "completion": {
-        "date": "2026-10-13",
-        "verification": [
-          "Entire 2,559-line original specification reviewed",
-          "All numbered source sections mapped to focused architecture destinations",
-          "Architecture documents created with substantive requirements preserved",
-          "Source noise and truncated final sentence recorded for M002 reconciliation",
-          "Original architecture reference confirmed unchanged",
-          "Progress JSON, documentation links, and staged diff validated"
-        ]
-      }
+      "completion": { "date": "2026-10-13", "verification": ["Entire 2,559-line source reviewed", "Requirements mapped into 13 architecture documents", "Links/progress/staged diff validated; source unchanged"] }
     },
     {
-      "id": "M002",
-      "title": "Architecture Reconciliation",
-      "stage": "stage-00",
-      "status": "completed",
-      "dependencies": ["M001"],
+      "id": "M002", "title": "Architecture Reconciliation", "stage": "stage-00", "status": "completed", "dependencies": ["M001"],
       "contract": "milestones/M002-architecture-reconciliation.md",
-      "completion": {
-        "date": "2026-10-13",
-        "verification": [
-          "Every recorded M001 issue reconciled or its remaining uncertainty documented",
-          "Accepted ADR records the selected postgres.js Drizzle driver",
-          "Architecture source preserved and higher-authority constraints applied",
-          "M003 next milestone contract created and next selection validated",
-          "Documentation links and staged whitespace checks passed"
-        ]
-      }
+      "completion": { "date": "2026-10-13", "verification": ["Source ambiguities reconciled/documented", "ADR-001 accepted for postgres.js", "Links/progress/dependency graph and staged diff validated"] }
     },
     {
-      "id": "M003",
-      "title": "Complete Implementation Roadmap",
-      "stage": "stage-00",
-      "status": "pending",
-      "dependencies": ["M002"],
-      "contract": "milestones/M003-complete-implementation-roadmap.md"
+      "id": "M003", "title": "Complete Implementation Roadmap", "stage": "stage-00", "status": "completed", "dependencies": ["M002"],
+      "contract": "milestones/M003-complete-implementation-roadmap.md",
+      "completion": { "date": "2026-10-13", "verification": ["Stages 00–10 and milestones M000–M022 defined", "Requirement matrix and definitions of done created", "All planned contracts, including M004, created", "Progress graph and documentation links validated", "Staged diff whitespace check passed"] }
     },
-    {
-      "id": "M004",
-      "title": "Execution Readiness",
-      "stage": "stage-00",
-      "status": "pending",
-      "dependencies": ["M003"],
-      "contract": "milestones/M004-execution-readiness.md"
-    }
+    { "id": "M004", "title": "Execution Readiness", "stage": "stage-00", "status": "pending", "dependencies": ["M003"], "contract": "milestones/M004-execution-readiness.md" },
+    { "id": "M005", "title": "Project Bootstrap and Local Workflow", "stage": "stage-01", "status": "pending", "dependencies": ["M004"], "contract": "milestones/M005-project-bootstrap.md" },
+    { "id": "M006", "title": "Zod Request Validation and API Versioning", "stage": "stage-02", "status": "pending", "dependencies": ["M005"], "contract": "milestones/M006-zod-validation.md" },
+    { "id": "M007", "title": "Problem Details, Logging, and OpenAPI", "stage": "stage-02", "status": "pending", "dependencies": ["M006"], "contract": "milestones/M007-http-contracts.md" },
+    { "id": "M008", "title": "PostgreSQL and Drizzle Infrastructure", "stage": "stage-03", "status": "pending", "dependencies": ["M007"], "contract": "milestones/M008-database-infrastructure.md" },
+    { "id": "M009", "title": "Core Schema, Migrations, and Seeds", "stage": "stage-03", "status": "pending", "dependencies": ["M008"], "contract": "milestones/M009-core-database-schema.md" },
+    { "id": "M010", "title": "User Credentials and Account Lifecycle", "stage": "stage-04", "status": "pending", "dependencies": ["M009"], "contract": "milestones/M010-user-account-lifecycle.md" },
+    { "id": "M011", "title": "JWT Sessions and Refresh Rotation", "stage": "stage-04", "status": "pending", "dependencies": ["M010"], "contract": "milestones/M011-session-lifecycle.md" },
+    { "id": "M012", "title": "Permission Model and Authorization Policies", "stage": "stage-05", "status": "pending", "dependencies": ["M011"], "contract": "milestones/M012-authorization.md" },
+    { "id": "M013", "title": "Organization Lifecycle and Ownership", "stage": "stage-05", "status": "pending", "dependencies": ["M012"], "contract": "milestones/M013-organizations.md" },
+    { "id": "M014", "title": "Memberships and Invitations", "stage": "stage-05", "status": "pending", "dependencies": ["M013"], "contract": "milestones/M014-memberships-invitations.md" },
+    { "id": "M015", "title": "Email Delivery and Audit Outbox", "stage": "stage-06", "status": "pending", "dependencies": ["M014"], "contract": "milestones/M015-email-audit.md" },
+    { "id": "M016", "title": "Tenant-Scoped Example Resources", "stage": "stage-07", "status": "pending", "dependencies": ["M015"], "contract": "milestones/M016-example-resources.md" },
+    { "id": "M017", "title": "Application Security Controls", "stage": "stage-08", "status": "pending", "dependencies": ["M016"], "contract": "milestones/M017-security-controls.md" },
+    { "id": "M018", "title": "Health and Observability", "stage": "stage-08", "status": "pending", "dependencies": ["M017"], "contract": "milestones/M018-observability.md" },
+    { "id": "M019", "title": "Production Docker Image", "stage": "stage-09", "status": "pending", "dependencies": ["M018"], "contract": "milestones/M019-docker-image.md" },
+    { "id": "M020", "title": "Helm and Kubernetes Operations", "stage": "stage-09", "status": "pending", "dependencies": ["M019"], "contract": "milestones/M020-kubernetes-deployment.md" },
+    { "id": "M021", "title": "CI/CD and Release Safety", "stage": "stage-09", "status": "pending", "dependencies": ["M020"], "contract": "milestones/M021-cicd.md" },
+    { "id": "M022", "title": "Final Review and Acceptance", "stage": "stage-10", "status": "pending", "dependencies": ["M021"], "contract": "milestones/M022-final-acceptance.md" }
   ]
 }

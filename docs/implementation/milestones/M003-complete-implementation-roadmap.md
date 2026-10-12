@@ -1,7 +1,7 @@
 # M003 — Complete Implementation Roadmap
 
 **Stage:** 00 — Preparation
-**Status:** pending
+**Status:** completed
 **Dependencies:** M002
 
 ## Objective
@@ -40,14 +40,29 @@ Define the complete project scope as ordered stages and independently verifiable
 
 ## Acceptance criteria
 
-- [ ] Every anticipated capability in approved scope is assigned to at least one milestone.
-- [ ] Every milestone uses a unique stable ID, has bounded scope and measurable acceptance criteria, and includes all required contract fields from `AGENTS.md` §5.
-- [ ] Dependencies reference valid IDs, are acyclic, and produce deterministic execution order.
-- [ ] The original ten phase outcomes are traceable without overriding the approved Stage 00 workflow.
-- [ ] Requirements matrix covers all applicable source and higher-authority requirements.
-- [ ] Global and milestone definitions of done preserve every mandatory AGENTS.md completion gate.
-- [ ] The project remains finite and no feature beyond the approved architecture is added.
-- [ ] M004 is the next milestone with its contract available; application code remains unchanged.
+- [x] Every anticipated capability in approved scope is assigned to at least one milestone.
+- [x] Every milestone uses a unique stable ID, has bounded scope and measurable acceptance criteria, and includes all required contract fields from `AGENTS.md` §5.
+- [x] Dependencies reference valid IDs, are acyclic, and produce deterministic execution order.
+- [x] The original ten phase outcomes are traceable without overriding the approved Stage 00 workflow.
+- [x] Requirements matrix covers all applicable source and higher-authority requirements.
+- [x] Global and milestone definitions of done preserve every mandatory AGENTS.md completion gate.
+- [x] The project remains finite and no feature beyond the approved architecture is added.
+- [x] M004 is the next milestone with its contract available; application code remains unchanged.
+
+## Completion checklist
+
+- [x] Acceptance criteria checked.
+- [x] Roadmap, all stage and milestone contracts, traceability, and definition of done created.
+- [x] Progress JSON/dashboard and Stage 00 status updated.
+- [x] Relevant changes staged and staged diff reviewed.
+- [x] No application code changed and no commit created.
+
+## Implementation notes
+
+- Roadmap includes Stage 00 and ten implementation stages, M000–M022, with a single explicit dependency chain and stage exit criteria.
+- Requirements are mapped from source sections and higher-authority AGENTS.md constraints to planned milestones in `requirements-matrix.md`.
+- Contracts split account credential handling from login/session rotation, and place selected resource-create idempotency in M016.
+- M004 is ready to validate progress metadata/tooling. M005 is not started.
 
 ## Verification requirements
 
