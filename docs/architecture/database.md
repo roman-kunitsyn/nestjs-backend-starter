@@ -42,4 +42,4 @@ PostgreSQL RLS is not required initially. Explain how it may be added as defense
 
 ## Source truncation
 
-The reference ends §21.3 mid-sentence after “Repository methods handling organization resources must receive explicit tenant”. M001 preserves the complete, repeated tenant rules from §§5.2/21.3 preceding text; M002 must record the truncation and avoid claiming the missing continuation is known.
+The reference ends §21.3 mid-sentence after “Repository methods handling organization resources must receive explicit tenant”. The enforceable requirement is nevertheless clear from §5.2 and the sentence's available beginning: repository methods receive explicit organization scope and apply it to tenant-owned operations. The missing continuation is unrecoverable and is not reconstructed; it contributes no additional known requirement.

@@ -13,11 +13,11 @@ Repository bootstrap. No application feature implementation is permitted during 
 | --- | --- | --- |
 | M000 | Documentation Structure | completed |
 | M001 | Architecture Decomposition | completed |
-| M002 | Architecture Reconciliation | pending |
+| M002 | Architecture Reconciliation | completed |
 | M003 | Complete Implementation Roadmap | pending |
 | M004 | Execution Readiness | pending |
 
-M000–M004 are reserved by `AGENTS.md`. Contracts are established before a milestone is selected. M000 established navigation; M001 decomposed the source requirements; M002's bounded contract is ready for the next session. M003–M004 remain pending.
+M000–M004 are reserved by `AGENTS.md`. Contracts are established before a milestone is selected. M000 established navigation; M001 decomposed the source requirements; M002 reconciled the architecture. M003 is next; M004 remains pending.
 
 ## Expected outcomes
 

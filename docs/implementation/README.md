@@ -5,7 +5,8 @@ This directory contains the approved implementation sequence and its execution s
 - [Stage 00](stages/stage-00-preparation.md) defines the preparation phase.
 - [M000](milestones/M000-documentation-structure.md) established the documentation structure.
 - [M001](milestones/M001-architecture-decomposition.md) records architecture decomposition and source traceability.
-- [M002](milestones/M002-architecture-reconciliation.md) is the next contract for resolving documented architecture conflicts and ambiguities.
+- [M002](milestones/M002-architecture-reconciliation.md) reconciles architecture conflicts and ambiguities.
+- [M003](milestones/M003-complete-implementation-roadmap.md) is the next contract for planning the full implementation.
 - [Progress data](progress.json) is authoritative; [the dashboard](progress.md) is its human-readable summary.
 - `roadmap.md`, `requirements-matrix.md`, and `definition-of-done.md` are established by later Stage 00 milestones.
 

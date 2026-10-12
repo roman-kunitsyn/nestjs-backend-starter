@@ -37,6 +37,6 @@ Validate configuration with Zod at startup and fail clearly without printing sec
 
 Separate local, test, staging, and production behavior; validate URLs and numeric ranges and key material; reject development signing keys in production; inject typed configuration rather than reading `process.env` across business code; fail closed on invalid security settings. Production secrets come through Kubernetes-compatible external secret delivery, never Helm values or source control. Support credential/key rotation and exclude secrets from logs, diagnostics, health endpoints, and crash output.
 
-## Source ambiguity
+## Existing scaffold reconciliation
 
-The repository currently has package and adapter choices that differ from this target (including Express and Vitest). `AGENTS.md` is higher authority for project constraints; record and resolve any concrete compatibility issue through M002/ADR before replacing dependencies.
+The checked-in starter currently contains the generated Express adapter and Vitest, and does not yet contain the approved Fastify/Jest and database stack. This is scaffold state, not a change to the target architecture. `AGENTS.md` requires Fastify and Jest and prohibits Express; the bootstrap milestone must align the scaffold before application feature work. The source's driver selection is resolved in [ADR-001](../decisions/ADR-001-postgres-js-driver.md). OpenAPI output must be labeled according to validated generator output; see [API conventions](api-conventions.md).

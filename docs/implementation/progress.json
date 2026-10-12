@@ -2,7 +2,7 @@
   "project": {
     "status": "preparation",
     "current_stage": "Stage 00 — Preparation",
-    "next_milestone": "M002"
+    "next_milestone": "M003"
   },
   "stages": [
     {
@@ -53,9 +53,19 @@
       "id": "M002",
       "title": "Architecture Reconciliation",
       "stage": "stage-00",
-      "status": "pending",
+      "status": "completed",
       "dependencies": ["M001"],
-      "contract": "milestones/M002-architecture-reconciliation.md"
+      "contract": "milestones/M002-architecture-reconciliation.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Every recorded M001 issue reconciled or its remaining uncertainty documented",
+          "Accepted ADR records the selected postgres.js Drizzle driver",
+          "Architecture source preserved and higher-authority constraints applied",
+          "M003 next milestone contract created and next selection validated",
+          "Documentation links and staged whitespace checks passed"
+        ]
+      }
     },
     {
       "id": "M003",
