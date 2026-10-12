@@ -3,8 +3,8 @@
 > Generated from `progress.json` by `pnpm progress:dashboard`. Do not edit by hand.
 
 **Project status:** in_progress
-**Current stage:** Stage 03 — Database Infrastructure
-**Next milestone:** M009 — Core Schema, Migrations, and Seeds (pending)
+**Current stage:** Stage 04 — Identity and Sessions
+**Next milestone:** M010 — User Credentials and Account Lifecycle (pending)
 
 ## Stage 00 — Preparation
 
@@ -22,7 +22,7 @@
 | --- | --- | --- | --- |
 | 01 | Project Bootstrap | M005 | completed |
 | 02 | HTTP and API Foundation | M006–M007 | completed |
-| 03 | Database Infrastructure | M008–M009 | in_progress |
+| 03 | Database Infrastructure | M008–M009 | completed |
 | 04 | Identity and Sessions | M010–M011 | pending |
 | 05 | Organizations and Authorization | M012–M014 | pending |
 | 06 | Email and Audit | M015 | pending |

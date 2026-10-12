@@ -1,7 +1,8 @@
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-/** Database types are extended with application tables in M009. */
-export const databaseSchema = {};
+import * as schema from './schema/index.js';
+
+export const databaseSchema = schema;
 export type Database = PostgresJsDatabase<typeof databaseSchema>;
 
 export const DATABASE = Symbol('DATABASE');

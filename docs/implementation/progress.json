@@ -1,14 +1,14 @@
 {
   "project": {
     "status": "in_progress",
-    "current_stage": "Stage 03 — Database Infrastructure",
-    "next_milestone": "M009"
+    "current_stage": "Stage 04 — Identity and Sessions",
+    "next_milestone": "M010"
   },
   "stages": [
     { "id": "stage-00", "title": "Preparation", "status": "completed", "milestones": ["M000","M001","M002","M003","M004"] },
     { "id": "stage-01", "title": "Project Bootstrap", "status": "completed", "milestones": ["M005"] },
     { "id": "stage-02", "title": "HTTP and API Foundation", "status": "completed", "milestones": ["M006","M007"] },
-    { "id": "stage-03", "title": "Database Infrastructure", "status": "in_progress", "milestones": ["M008","M009"] },
+    { "id": "stage-03", "title": "Database Infrastructure", "status": "completed", "milestones": ["M008","M009"] },
     { "id": "stage-04", "title": "Identity and Sessions", "status": "pending", "milestones": ["M010","M011"] },
     { "id": "stage-05", "title": "Organizations and Authorization", "status": "pending", "milestones": ["M012","M013","M014"] },
     { "id": "stage-06", "title": "Email and Audit", "status": "pending", "milestones": ["M015"] },
@@ -27,7 +27,7 @@
     { "id": "M006", "title": "Zod Request Validation and API Versioning", "stage": "stage-02", "status": "completed", "dependencies": ["M005"], "contract": "milestones/M006-zod-validation.md", "completion": {"date":"2026-10-13","verification":["Lint, Prettier check, strict typecheck, and Nest build passed","Unit tests passed: 9 tests across 3 suites","Fastify E2E passed: 6 tests across 2 suites, including body/path/query validation, size limit, and health namespace","Progress validator passed; M007 selected as next milestone"]} },
     { "id": "M007", "title": "Problem Details, Logging, and OpenAPI", "stage": "stage-02", "status": "completed", "dependencies": ["M006"], "contract": "milestones/M007-http-contracts.md", "completion": {"date":"2026-10-13","verification":["Problem Details and request correlation Fastify E2E cases passed, including validation, body limit, supplied/invalid request IDs, and production-safe unexpected error response","Pino redaction configuration and production API docs default covered by configuration and environment tests","Unit tests passed: 13 tests across 4 suites; Fastify E2E passed: 11 tests across 2 suites, including JSON/YAML/docs routes","Formatting, lint, strict typecheck, Nest build, OpenAPI generation and 3.1 artifact freshness check passed","Progress validator and regression tests passed; M008 selected as next milestone"]} },
     { "id": "M008", "title": "PostgreSQL and Drizzle Infrastructure", "stage": "stage-03", "status": "completed", "dependencies": ["M007"], "contract": "milestones/M008-database-infrastructure.md", "completion": {"date":"2026-10-13","verification":["PostgreSQL 18 Testcontainers integration generated a Drizzle Kit fixture migration into a temporary directory, applied it to a fresh database, and verified table creation and transaction execution","Lint, formatting, strict typecheck, build, 14 unit tests, 11 Fastify E2E tests, and 1 integration test passed","Drizzle Kit migration check passed; progress validator and 11 tracking regression cases passed; M009 selected next"]} },
-    { "id": "M009", "title": "Core Schema, Migrations, and Seeds", "stage": "stage-03", "status": "pending", "dependencies": ["M008"], "contract": "milestones/M009-core-database-schema.md" },
+    { "id": "M009", "title": "Core Schema, Migrations, and Seeds", "stage": "stage-03", "status": "completed", "dependencies": ["M008"], "contract": "milestones/M009-core-database-schema.md", "completion": {"date":"2026-10-13","verification":["Fresh PostgreSQL 18 migration from zero passed; all 15 tables created","Reference/dev seeds repeated idempotently; dev seed production refusal passed","Composite tenant FK, reserved slug check, rollback and required index introspection passed","Formatting, lint, strict typecheck, build, 14 unit tests, 11 Fastify E2E tests, 2 PostgreSQL integration tests, Drizzle migration check and 11 progress regressions passed","Stage 03 exit criteria passed; M010 selected next"]} },
     { "id": "M010", "title": "User Credentials and Account Lifecycle", "stage": "stage-04", "status": "pending", "dependencies": ["M009"], "contract": "milestones/M010-user-account-lifecycle.md" },
     { "id": "M011", "title": "JWT Sessions and Refresh Rotation", "stage": "stage-04", "status": "pending", "dependencies": ["M010"], "contract": "milestones/M011-session-lifecycle.md" },
     { "id": "M012", "title": "Permission Model and Authorization Policies", "stage": "stage-05", "status": "pending", "dependencies": ["M011"], "contract": "milestones/M012-authorization.md" },

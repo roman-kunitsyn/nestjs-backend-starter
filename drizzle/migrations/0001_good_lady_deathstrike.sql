@@ -1,0 +1,4 @@
+ALTER TABLE "organization_invitations" ADD CONSTRAINT "organization_invitations_inviter_org_fk" FOREIGN KEY ("invited_by_membership_id","organization_id") REFERENCES "public"."organization_memberships"("id","organization_id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "organization_invitations" ADD CONSTRAINT "organization_invitations_state_ck" CHECK ((status = 'pending' AND accepted_at IS NULL AND revoked_at IS NULL) OR (status = 'accepted' AND accepted_at IS NOT NULL AND revoked_at IS NULL) OR (status = 'revoked' AND accepted_at IS NULL AND revoked_at IS NOT NULL));--> statement-breakpoint
+ALTER TABLE "organizations" ADD CONSTRAINT "organizations_slug_ck" CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$');--> statement-breakpoint
+ALTER TABLE "organizations" ADD CONSTRAINT "organizations_reserved_slug_ck" CHECK (normalized_slug NOT IN ('admin', 'system', 'api'));

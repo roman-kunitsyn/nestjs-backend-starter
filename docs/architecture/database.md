@@ -30,6 +30,10 @@ Every tenant table uses `id UUID`, `organization_id UUID NOT NULL`, and required
 
 The starter must add transactional `email_outbox` storage as specified in [Email](email.md).
 
+The implemented Drizzle definitions are under `src/infrastructure/database/schema/`. PostgreSQL enum types constrain lifecycle states; checks constrain organization slug format/reserved values, invitation state consistency, and outbox attempts/status. `example_resources` and invitation inviter references use composite `(membership_id, organization_id)` foreign keys so a valid membership from another organization cannot satisfy the relationship. Memberships expose `(id, organization_id)` as a unique key for these references. Role assignments are limited to one role per membership by a unique membership index, while the join model remains relational. Reference role/permission data is installed with `pnpm db:seed:reference`; local-only fixtures require `pnpm db:seed:dev` and are rejected when `NODE_ENV=production`.
+
+Invitation status and timestamps must be updated together. Outbox claims use `status`, `next_attempt_at`, and nullable `locked_until` with the dispatch index; claim/lease behavior belongs to the later email dispatcher milestone. These tables establish storage only and do not imply that account, invitation, audit, or email use cases already exist.
+
 ## Transactions and invariants
 
 Use transactions for organization plus owner creation; invite acceptance plus membership; ownership change; member removal with last-owner protection; refresh rotation; reset-token consumption plus password update; and privileged changes plus required audit record. An active organization always has an active owner. Prevent removing, demoting, or suspending the last owner and reject transfer to unauthorized/inactive membership. Enforce concurrent safety using explicit locks, serializable transactions with retries, or equivalent; an out-of-transaction count check is insufficient.

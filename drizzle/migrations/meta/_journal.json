@@ -1,1 +1,27 @@
-{"version":"7","dialect":"postgresql","entries":[]}
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791845823352,
+      "tag": "0000_neat_lockheed",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791845881611,
+      "tag": "0001_good_lady_deathstrike",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791846164063,
+      "tag": "0002_sturdy_spot",
+      "breakpoints": true
+    }
+  ]
+}
