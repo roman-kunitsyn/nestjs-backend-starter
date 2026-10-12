@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-SESSION_NAME="${1:'nestjs'}"
+SESSION_NAME="${1}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$ROOT_DIR"
 
