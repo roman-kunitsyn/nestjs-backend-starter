@@ -12,6 +12,8 @@ This directory is the project's persistent technical and implementation record. 
 | [implementation/](implementation/README.md) | Roadmap, requirements traceability, milestone contracts, and progress. |
 | [operations/](operations/) | Development, testing, migration, deployment, and troubleshooting procedures. |
 
+Account endpoint behavior and current lifecycle limitations are documented in [authentication operations](operations/authentication.md).
+
 The current scaffold setup is in [Local development](operations/local-development.md).
 
 ## Conventions

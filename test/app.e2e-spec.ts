@@ -78,6 +78,33 @@ describe('AppController (Fastify E2E)', () => {
     expect(response.body).toContain('ProblemDetails:');
   });
 
+  it('publishes validated account endpoints in the OpenAPI contract', async () => {
+    const response = await app.getHttpAdapter().getInstance().inject({
+      method: 'GET',
+      url: '/openapi.json',
+    });
+    const document = response.json();
+    expect(document.paths['/api/v1/auth/register'].post).toBeDefined();
+    expect(document.paths['/api/v1/auth/verify-email'].post).toBeDefined();
+    expect(document.paths['/api/v1/auth/forgot-password'].post).toBeDefined();
+    expect(document.paths['/api/v1/auth/reset-password'].post).toBeDefined();
+  });
+
+  it('rejects malformed registration at the HTTP boundary before persistence', async () => {
+    const response = await app
+      .getHttpAdapter()
+      .getInstance()
+      .inject({
+        method: 'POST',
+        url: '/api/v1/auth/register',
+        payload: { email: 'not-an-email', password: 'short' },
+      });
+    expect(response.statusCode).toBe(400);
+    expect(response.headers['content-type']).toContain(
+      'application/problem+json',
+    );
+  });
+
   afterAll(async () => {
     await app.close();
   });

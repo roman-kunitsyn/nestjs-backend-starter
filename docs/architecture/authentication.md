@@ -13,6 +13,10 @@ Use two credentials: a short-lived JWT access token (10 minutes default) and a l
 | Maximum session | 30 days |
 | Password reset token | 30 minutes |
 | Email verification token | 24 hours |
+
+M010 implements account registration, email verification, verification resend, password recovery, and password reset under `/api/v1/auth`. Email is Unicode NFKC-normalized for storage and compared using a trimmed lowercase normalized value; provider-specific transformations are not applied. Passwords require 12–256 characters and use Argon2id (19 MiB memory, 2 iterations, 1 lane); verification failures are handled uniformly and parameter changes are rehashed on successful credential verification. Verification tokens expire after 24 hours and reset tokens after 30 minutes. Token digests are SHA-256 over 256-bit random base64url secrets. Recovery/resend responses are account-enumeration resistant and issuance is limited to three per user per hour. Email is sent after the credential transaction commits, so delivery is not durable until M015.
+
+The current runtime selects the console email adapter only outside production. Production startup fails until a production sender is configured; SMTP and the transactional outbox belong to M015. The current application exposes no bearer-authenticated identity/profile or password-change route yet: these rely on the session/JWT capability in M011 and remain outstanding in the M010 contract pending that dependency.
 | Invitation | 7 days |
 
 ## JWT validation

@@ -5,4 +5,10 @@ autoInstallPeers: false
 # required to build, lint, test, or run the application.
 allowBuilds:
   '@parcel/watcher': false
+  '@scarf/scarf': false
+  argon2: true
+  cpu-features: false
+  esbuild: false
+  protobufjs: false
+  ssh2: false
   unrs-resolver: false
