@@ -46,11 +46,17 @@ test('allows an active stage to contain completed work and pending milestones', 
 });
 test('resumes blocked work before pending milestones', () => {
   const progress = structuredClone(baseline);
+  progress.milestones.forEach((milestone) => {
+    if (milestone.status === 'in_progress' || milestone.status === 'blocked') milestone.status = 'pending';
+  });
   progress.milestones[5].status = 'blocked';
   assert.equal(selectNextMilestone(progress), 'M005');
 });
 test('resumes in-progress work before pending milestones', () => {
   const progress = structuredClone(baseline);
+  progress.milestones.forEach((milestone) => {
+    if (milestone.status === 'in_progress' || milestone.status === 'blocked') milestone.status = 'pending';
+  });
   progress.milestones[5].status = 'in_progress';
   assert.equal(selectNextMilestone(progress), 'M005');
 });

@@ -8,6 +8,11 @@ describe('environment configuration', () => {
       APP_HOST: '127.0.0.1',
       PORT: 3000,
       API_DOCS_ENABLED: true,
+      DATABASE_URL:
+        'postgresql://app:local_dev_only_change_me@localhost:5432/app',
+      DB_POOL_MAX: 10,
+      DB_CONNECT_TIMEOUT_SECONDS: 10,
+      DB_IDLE_TIMEOUT_SECONDS: 20,
     });
   });
 

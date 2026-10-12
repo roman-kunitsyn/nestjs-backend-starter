@@ -16,11 +16,11 @@ pnpm infra:up
 pnpm start:dev
 ```
 
-The API binds to `APP_HOST` and `PORT`. The starter route is `GET /api/v1` and returns the plain text `Hello World!`. Interactive Swagger UI is available at `/docs`; the JSON and YAML contracts are served at `/openapi.json` and `/openapi.yaml`. PostgreSQL is available on `POSTGRES_PORT` (5432 by default); database access, migrations, and seeds are added in later milestones. The Compose database uses a named volume and a development-only password. `pnpm infra:down` stops the service and keeps its data; remove the volume only when you intentionally want to discard the local database.
+The API binds to `APP_HOST` and `PORT`. The starter route is `GET /api/v1` and returns the plain text `Hello World!`. Interactive Swagger UI is available at `/docs`; the JSON and YAML contracts are served at `/openapi.json` and `/openapi.yaml`. PostgreSQL is available on `POSTGRES_PORT` (5432 by default). The application uses `DATABASE_URL` and a bounded pool configured by `DB_POOL_MAX`, `DB_CONNECT_TIMEOUT_SECONDS`, and `DB_IDLE_TIMEOUT_SECONDS`. The Compose database uses a named volume and a development-only password. `pnpm infra:down` stops the service and keeps its data; remove the volume only when you intentionally want to discard the local database.
 
 ## Configuration
 
-Copy `.env.example` to `.env`. At startup, Zod validates `NODE_ENV`, `APP_NAME`, `APP_HOST`, `PORT`, and optional `API_DOCS_ENABLED`. Docs UI is enabled by default outside production and disabled by default in production; set `API_DOCS_ENABLED=true` only when interactive docs are intended to be public. Raw OpenAPI JSON/YAML endpoints remain available for clients and deployment checks. Invalid values stop startup with field names and safe issue messages; configuration values are not included in the error. PostgreSQL variables are read by Compose. The example password and connection URL are local development values only and must never be used for a deployed environment.
+Copy `.env.example` to `.env`. At startup, Zod validates application, API docs, database URL, and pool settings. Docs UI is enabled by default outside production and disabled by default in production; set `API_DOCS_ENABLED=true` only when interactive docs are intended to be public. Raw OpenAPI JSON/YAML endpoints remain available for clients and deployment checks. Invalid values stop startup with field names and safe issue messages; configuration values are not included in the error. PostgreSQL variables are read by Compose. The example password and connection URL are local development values only and must never be used for a deployed environment.
 
 ## Quality commands
 
@@ -47,4 +47,4 @@ docker compose ps
 pnpm infra:down
 ```
 
-Use `docker compose down -v` only when you intend to delete the local PostgreSQL volume. Database migration commands are introduced with the Drizzle infrastructure milestones.
+Use `docker compose down -v` only when you intend to delete the local PostgreSQL volume. Run database migrations explicitly with `pnpm db:migrate`; application startup never migrates the database. See [Migrations](migrations.md) for the schema workflow.

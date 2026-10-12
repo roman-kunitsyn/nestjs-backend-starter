@@ -11,6 +11,18 @@ const EnvironmentInputSchema = z.object({
     (value) => (value === 'true' ? true : value === 'false' ? false : value),
     z.boolean().optional(),
   ),
+  DATABASE_URL: z
+    .string()
+    .url()
+    .default('postgresql://app:local_dev_only_change_me@localhost:5432/app'),
+  DB_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
+  DB_CONNECT_TIMEOUT_SECONDS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(60)
+    .default(10),
+  DB_IDLE_TIMEOUT_SECONDS: z.coerce.number().int().min(0).max(600).default(20),
 });
 
 export const EnvironmentSchema = EnvironmentInputSchema.transform((config) => ({

@@ -10,6 +10,7 @@ This directory contains the approved implementation sequence and its execution s
 - [M004](milestones/M004-execution-readiness.md) establishes and verifies the progress tooling.
 - [Progress data](progress.json) is authoritative; [the dashboard](progress.md) is its human-readable summary.
 - [Roadmap](roadmap.md) defines approved ordering and scope; [requirements matrix](requirements-matrix.md) traces requirements to evidence; [definition of done](definition-of-done.md) records completion gates.
+- Database connection and migration procedures are documented in [operations](../operations/local-development.md), [migrations](../operations/migrations.md), and [testing](../operations/testing.md).
 
 ## Resuming work
 

@@ -1,0 +1,8 @@
+import baseConfig from './jest.config.mjs';
+
+/** @type {import('jest').Config} */
+export default {
+  ...baseConfig,
+  testMatch: ['<rootDir>/test/**/*.integration-spec.ts'],
+  testTimeout: 120000,
+};
