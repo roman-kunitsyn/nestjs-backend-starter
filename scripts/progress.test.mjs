@@ -28,8 +28,18 @@ test('rejects invalid milestone status', () => broken((p) => { p.milestones[4].s
 test('rejects unknown dependency references', () => broken((p) => { p.milestones[4].dependencies = ['M999']; }, 'unknown dependency'));
 test('rejects dependency cycles', () => broken((p) => { p.milestones[0].dependencies = ['M004']; }, 'Dependency cycle'));
 test('rejects multiple active milestones', () => broken((p) => { p.milestones[5].status = 'in_progress'; p.milestones[6].status = 'in_progress'; p.stages[1].status = 'in_progress'; }, 'At most one'));
-test('rejects completed milestones with incomplete dependencies', () => broken((p) => { p.milestones[7].status = 'completed'; }, 'incomplete'));
+test('rejects completed milestones with incomplete dependencies', () => broken((p) => {
+  p.milestones[6].status = 'pending';
+  p.milestones[7].status = 'completed';
+  p.milestones[7].completion = { date: '2026-10-13', verification: ['test'] };
+}, 'incomplete'));
 test('rejects an incorrect recorded next milestone', () => broken((p) => { p.project.next_milestone = 'M004'; }, 'Wrong next milestone'));
+test('allows an active stage to contain completed work and pending milestones', () => {
+  const progress = structuredClone(baseline);
+  const stage = progress.stages.find(({ id }) => id === 'stage-02');
+  stage.status = 'in_progress';
+  assert.ok(!validateProgress(input(progress)).some((error) => error.includes('stage-02')));
+});
 test('resumes blocked work before pending milestones', () => {
   const progress = structuredClone(baseline);
   progress.milestones[5].status = 'blocked';

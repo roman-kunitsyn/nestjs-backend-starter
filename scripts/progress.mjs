@@ -63,7 +63,8 @@ export function validateProgress({ progress, rootDir, roadmap, matrix }) {
     const statuses = (stage.milestones ?? []).map((id) => milestones.find((item) => item.id === id)?.status);
     if (stage.status === 'completed' && statuses.some((status) => status !== 'completed')) errors.push(`${stage.id}: completed stage contains unfinished milestone.`);
     if (stage.status === 'pending' && statuses.some((status) => status === 'in_progress' || status === 'blocked' || status === 'completed')) errors.push(`${stage.id}: pending stage contains started milestone.`);
-    if (stage.status === 'in_progress' && !statuses.some((status) => status === 'in_progress' || status === 'blocked')) errors.push(`${stage.id}: in_progress stage has no active/blocked milestone.`);
+    if (stage.status === 'in_progress' && !statuses.some((status) => status !== 'pending')) errors.push(`${stage.id}: in_progress stage has no started milestone.`);
+    if (stage.status === 'in_progress' && statuses.every((status) => status === 'completed')) errors.push(`${stage.id}: in_progress stage contains no unfinished milestone.`);
   }
   const active = milestones.filter(({ status }) => status === 'in_progress' || status === 'blocked');
   if (active.length > 1) errors.push('At most one milestone may be in_progress or blocked.');

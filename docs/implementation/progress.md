@@ -4,7 +4,7 @@
 
 **Project status:** in_progress
 **Current stage:** Stage 02 — HTTP and API Foundation
-**Next milestone:** M006 — Zod Request Validation and API Versioning (pending)
+**Next milestone:** M007 — Problem Details, Logging, and OpenAPI (pending)
 
 ## Stage 00 — Preparation
 
@@ -21,7 +21,7 @@
 | Stage | Title | Milestones | Status |
 | --- | --- | --- | --- |
 | 01 | Project Bootstrap | M005 | completed |
-| 02 | HTTP and API Foundation | M006–M007 | pending |
+| 02 | HTTP and API Foundation | M006–M007 | in_progress |
 | 03 | Database Infrastructure | M008–M009 | pending |
 | 04 | Identity and Sessions | M010–M011 | pending |
 | 05 | Organizations and Authorization | M012–M014 | pending |

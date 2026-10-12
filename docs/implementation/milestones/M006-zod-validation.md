@@ -28,11 +28,11 @@ Establish reusable, type-safe validation of all public HTTP input and the `/api/
 
 ## Acceptance criteria
 
-- [ ] Body, path, and query input is parsed before controller/service use; untrusted values do not rely on TypeScript types alone.
-- [ ] Unknown public write fields, malformed UUIDs, invalid enums, excessive lengths/body sizes, and invalid query values fail consistently.
-- [ ] DTO response schemas do not expose internal persistence models.
-- [ ] Business API route convention is `/api/v1`; health routes remain outside it.
-- [ ] No class-validator is introduced.
+- [x] Body, path, and query input is parsed before controller/service use; untrusted values do not rely on TypeScript types alone.
+- [x] Unknown public write fields, malformed UUIDs, invalid enums, excessive lengths/body sizes, and invalid query values fail consistently.
+- [x] DTO response schemas do not expose internal persistence models.
+- [x] Business API route convention is `/api/v1`; health routes remain outside it.
+- [x] No class-validator is introduced.
 
 ## Verification
 
@@ -40,4 +40,11 @@ Run schema unit tests and Fastify E2E cases for valid input, malformed path/quer
 
 ## Completion checklist
 
-- [ ] Acceptance and quality checks pass; API conventions are documented; progress/diff handoff is complete.
+- [x] Acceptance and quality checks pass; API conventions are documented; progress/diff handoff is complete.
+
+## Implementation notes
+
+- Added `ZodValidationPipe`, which returns parsed schema output and emits safe issue paths/codes for the upcoming Problem Details mapping.
+- Applied the global `/api/v1` prefix with explicit health route exclusions and a 1 MiB Fastify body cap.
+- Added unit and Fastify injection coverage for normalization/coercion, malformed body/path/query input, unknown fields, field/body bounds, route prefixing, and reserved health paths.
+- No persistence DTO exists in this milestone; response contracts remain separate Zod schemas/types per the documented API convention.
