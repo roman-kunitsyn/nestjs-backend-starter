@@ -13,17 +13,42 @@ describe('environment configuration', () => {
       DB_POOL_MAX: 10,
       DB_CONNECT_TIMEOUT_SECONDS: 10,
       DB_IDLE_TIMEOUT_SECONDS: 20,
+      AUTH_JWT_ISSUER: 'https://api.example.com',
+      AUTH_JWT_AUDIENCE: 'nestjs-backend-starter',
+      AUTH_JWT_KID: 'local-ed25519-1',
+      AUTH_JWT_PRIVATE_KEY: '',
+      AUTH_JWT_PUBLIC_KEY: '',
+      AUTH_JWT_PUBLIC_KEYS: '',
+      AUTH_REFRESH_TOKEN_KEY: '',
+      AUTH_REFRESH_IDLE_DAYS: 14,
+      AUTH_SESSION_MAX_DAYS: 30,
     });
   });
 
   it('disables interactive API docs by default in production while allowing explicit configuration', () => {
     expect(
-      validateEnvironment({ NODE_ENV: 'production' }).API_DOCS_ENABLED,
+      validateEnvironment({
+        NODE_ENV: 'production',
+        AUTH_JWT_PRIVATE_KEY: 'private',
+        AUTH_JWT_PUBLIC_KEY: 'public',
+        AUTH_REFRESH_TOKEN_KEY: 'A'.repeat(43),
+      }).API_DOCS_ENABLED,
     ).toBe(false);
     expect(
-      validateEnvironment({ NODE_ENV: 'production', API_DOCS_ENABLED: 'true' })
-        .API_DOCS_ENABLED,
+      validateEnvironment({
+        NODE_ENV: 'production',
+        AUTH_JWT_PRIVATE_KEY: 'private',
+        AUTH_JWT_PUBLIC_KEY: 'public',
+        AUTH_REFRESH_TOKEN_KEY: 'A'.repeat(43),
+        API_DOCS_ENABLED: 'true',
+      }).API_DOCS_ENABLED,
     ).toBe(true);
+  });
+
+  it('requires configured asymmetric JWT keys in production', () => {
+    expect(() => validateEnvironment({ NODE_ENV: 'production' })).toThrow(
+      'AUTH_JWT_PRIVATE_KEY and AUTH_JWT_PUBLIC_KEY are required',
+    );
   });
 
   it('rejects unsupported API_DOCS_ENABLED values', () => {

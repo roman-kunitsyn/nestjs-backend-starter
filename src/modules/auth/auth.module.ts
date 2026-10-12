@@ -4,28 +4,34 @@ import type { EnvironmentConfig } from '../../config/environment.js';
 import { DatabaseModule } from '../../infrastructure/database/database.module.js';
 import { EMAIL_SENDER, ConsoleEmailSender } from '../email/email-sender.js';
 import { AuthController } from './auth.controller.js';
+import { UsersController } from './users.controller.js';
 import { AuthService } from './auth.service.js';
+import { JwtService } from './jwt.service.js';
+import { SessionGuard } from './session.guard.js';
+import { SessionService } from './session.service.js';
 import { PasswordHasher } from './password-hasher.js';
 
 @Module({
   imports: [DatabaseModule],
-  controllers: [AuthController],
+  controllers: [AuthController, UsersController],
   providers: [
     AuthService,
     PasswordHasher,
+    JwtService,
+    SessionService,
+    SessionGuard,
     {
       provide: EMAIL_SENDER,
       inject: [ConfigService],
       useFactory: (config: ConfigService<EnvironmentConfig>) => {
-        if (config.getOrThrow('NODE_ENV', { infer: true }) === 'production') {
+        if (config.getOrThrow('NODE_ENV', { infer: true }) === 'production')
           throw new Error(
             'A production EmailSender adapter must be configured before enabling account flows',
           );
-        }
         return new ConsoleEmailSender();
       },
     },
   ],
-  exports: [AuthService, PasswordHasher],
+  exports: [AuthService, PasswordHasher, SessionService, JwtService],
 })
 export class AuthModule {}

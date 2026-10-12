@@ -69,7 +69,6 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      summary: Verify an email address
       tags: *a1
   /api/v1/auth/resend-verification:
     post:
@@ -110,6 +109,143 @@ paths:
               schema:
                 type: string
       tags: *a1
+  /api/v1/auth/login:
+    post:
+      operationId: login
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      tags: *a1
+  /api/v1/auth/refresh:
+    post:
+      operationId: refresh
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      tags: *a1
+  /api/v1/auth/logout:
+    post:
+      operationId: logout
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security:
+        - bearer: []
+      tags: *a1
+  /api/v1/auth/logout-all:
+    post:
+      operationId: logoutAll
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security:
+        - bearer: []
+      tags: *a1
+  /api/v1/auth/me:
+    get:
+      operationId: me
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security:
+        - bearer: []
+      tags: *a1
+  /api/v1/auth/sessions:
+    get:
+      operationId: sessionsList
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security:
+        - bearer: []
+      tags: *a1
+  /api/v1/auth/sessions/{id}:
+    delete:
+      operationId: revoke
+      parameters:
+        - name: id
+          required: true
+          in: path
+          schema:
+            type: string
+      responses:
+        "200":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security:
+        - bearer: []
+      tags: *a1
+  /api/v1/auth/change-password:
+    post:
+      operationId: changePassword
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security:
+        - bearer: []
+      tags: *a1
+  /api/v1/users/me:
+    get:
+      operationId: me
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security:
+        - bearer: []
+      tags:
+        - Users
 info:
   title: NestJS Backend Starter API
   description: REST API contract for the NestJS backend starter.

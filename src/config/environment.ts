@@ -23,6 +23,19 @@ const EnvironmentInputSchema = z.object({
     .max(60)
     .default(10),
   DB_IDLE_TIMEOUT_SECONDS: z.coerce.number().int().min(0).max(600).default(20),
+  AUTH_JWT_ISSUER: z.string().url().default('https://api.example.com'),
+  AUTH_JWT_AUDIENCE: z.string().min(1).default('nestjs-backend-starter'),
+  AUTH_JWT_KID: z.string().min(1).max(100).default('local-ed25519-1'),
+  AUTH_JWT_PRIVATE_KEY: z.string().default(''),
+  AUTH_JWT_PUBLIC_KEY: z.string().default(''),
+  AUTH_JWT_PUBLIC_KEYS: z.string().default(''),
+  AUTH_REFRESH_TOKEN_KEY: z.string().default(''),
+  AUTH_REFRESH_COOKIE_SECURE: z.preprocess(
+    (value) => (value === 'true' ? true : value === 'false' ? false : value),
+    z.boolean().optional(),
+  ),
+  AUTH_REFRESH_IDLE_DAYS: z.coerce.number().int().min(1).max(30).default(14),
+  AUTH_SESSION_MAX_DAYS: z.coerce.number().int().min(1).max(90).default(30),
 });
 
 export const EnvironmentSchema = EnvironmentInputSchema.transform((config) => ({
@@ -36,7 +49,25 @@ export function validateEnvironment(
   config: Record<string, unknown>,
 ): EnvironmentConfig {
   const parsed = EnvironmentSchema.safeParse(config);
-  if (parsed.success) return parsed.data;
+  if (parsed.success) {
+    if (
+      parsed.data.NODE_ENV === 'production' &&
+      (!parsed.data.AUTH_JWT_PRIVATE_KEY || !parsed.data.AUTH_JWT_PUBLIC_KEY)
+    ) {
+      throw new Error(
+        'Invalid environment configuration: AUTH_JWT_PRIVATE_KEY and AUTH_JWT_PUBLIC_KEY are required in production',
+      );
+    }
+    if (
+      parsed.data.NODE_ENV === 'production' &&
+      parsed.data.AUTH_REFRESH_TOKEN_KEY.length < 43
+    ) {
+      throw new Error(
+        'Invalid environment configuration: AUTH_REFRESH_TOKEN_KEY must contain at least 43 base64url characters in production',
+      );
+    }
+    return parsed.data;
+  }
 
   const fields = parsed.error.issues.map(
     (issue) => `${issue.path.join('.') || 'environment'}: ${issue.message}`,

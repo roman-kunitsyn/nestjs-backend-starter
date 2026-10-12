@@ -11,6 +11,7 @@ import {
   type Database,
 } from '../../infrastructure/database/database.types.js';
 import {
+  authSessions,
   emailVerificationTokens,
   passwordResetTokens,
   users,
@@ -254,6 +255,12 @@ export class AuthService {
         .update(users)
         .set({ passwordHash, updatedAt: new Date() })
         .where(eq(users.id, user.id));
+      await tx
+        .update(authSessions)
+        .set({ revokedAt: new Date(), revocationReason: 'password_reset' })
+        .where(
+          and(eq(authSessions.userId, user.id), isNull(authSessions.revokedAt)),
+        );
       return { reset: true };
     });
   }
@@ -271,12 +278,12 @@ export class AuthService {
         code: 'INVALID_CREDENTIALS',
         message: 'Invalid email or password',
       });
-    if (this.passwords.needsRehash(hash)) {
+    if (user.passwordHash && this.passwords.needsRehash(hash)) {
       const passwordHash = await this.passwords.hash(password);
       await this.db
         .update(users)
         .set({ passwordHash, updatedAt: new Date() })
-        .where(eq(users.id, user.id));
+        .where(and(eq(users.id, user.id), eq(users.passwordHash, hash)));
     }
     return publicUser(user);
   }
@@ -300,20 +307,48 @@ export class AuthService {
         code: 'INVALID_CREDENTIALS',
         message: 'Current password is incorrect',
       });
+    const currentHash = user.passwordHash;
     const passwordHash = await this.passwords.hash(nextPassword);
-    const [updated] = await this.db
-      .update(users)
-      .set({ passwordHash, updatedAt: new Date() })
-      .where(
-        and(eq(users.id, user.id), eq(users.passwordHash, user.passwordHash)),
-      )
-      .returning({ id: users.id });
+    const updated = await this.db.transaction(async (tx) => {
+      const [changed] = await tx
+        .update(users)
+        .set({ passwordHash, updatedAt: new Date() })
+        .where(and(eq(users.id, user.id), eq(users.passwordHash, currentHash)))
+        .returning({ id: users.id });
+      if (changed)
+        await tx
+          .update(authSessions)
+          .set({ revokedAt: new Date(), revocationReason: 'password_change' })
+          .where(
+            and(
+              eq(authSessions.userId, user.id),
+              isNull(authSessions.revokedAt),
+            ),
+          );
+      return changed;
+    });
     if (!updated)
       throw new UnauthorizedException({
         code: 'INVALID_CREDENTIALS',
         message: 'Current password is incorrect',
       });
     return { changed: true };
+  }
+
+  async confirmCurrentPassword(userId: string, currentPassword: string) {
+    const [user] = await this.db
+      .select()
+      .from(users)
+      .where(and(eq(users.id, userId), eq(users.status, 'active')))
+      .limit(1);
+    if (
+      !user?.passwordHash ||
+      !(await this.passwords.verify(user.passwordHash, currentPassword))
+    )
+      throw new UnauthorizedException({
+        code: 'INVALID_CREDENTIALS',
+        message: 'Current password is incorrect',
+      });
   }
 
   async profile(userId: string) {

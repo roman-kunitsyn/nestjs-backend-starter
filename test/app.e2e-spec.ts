@@ -108,6 +108,9 @@ describe('AppController (Fastify E2E)', () => {
     expect(document.paths['/api/v1/auth/verify-email'].post).toBeDefined();
     expect(document.paths['/api/v1/auth/forgot-password'].post).toBeDefined();
     expect(document.paths['/api/v1/auth/reset-password'].post).toBeDefined();
+    expect(document.paths['/api/v1/auth/login'].post).toBeDefined();
+    expect(document.paths['/api/v1/auth/refresh'].post).toBeDefined();
+    expect(document.paths['/api/v1/users/me'].get).toBeDefined();
   });
 
   it('rejects malformed registration at the HTTP boundary before persistence', async () => {
@@ -181,6 +184,66 @@ describe('AppController (Fastify E2E)', () => {
     expect(existing.statusCode).toBe(202);
     expect(missing.statusCode).toBe(202);
     expect(existing.json()).toEqual(missing.json());
+  });
+
+  it('logs in, sets an HttpOnly refresh cookie, and protects the current identity route', async () => {
+    const server = app.getHttpAdapter().getInstance();
+    await server.inject({
+      method: 'POST',
+      url: '/api/v1/auth/register',
+      payload: {
+        email: 'session.e2e@example.com',
+        password: 'correct horse battery staple',
+      },
+    });
+    const login = await server.inject({
+      method: 'POST',
+      url: '/api/v1/auth/login',
+      payload: {
+        email: 'session.e2e@example.com',
+        password: 'correct horse battery staple',
+      },
+    });
+    expect(login.statusCode).toBe(200);
+    expect(login.json()).toMatchObject({
+      tokenType: 'Bearer',
+      expiresIn: 600,
+      user: { email: 'session.e2e@example.com' },
+    });
+    const cookie = login.headers['set-cookie'];
+    expect(cookie).toContain('HttpOnly');
+    expect(cookie).toContain('SameSite=Lax');
+    const refreshCookie = String(cookie).split(';')[0];
+    const refresh = await server.inject({
+      method: 'POST',
+      url: '/api/v1/auth/refresh',
+      headers: { cookie: refreshCookie },
+    });
+    expect(refresh.statusCode).toBe(200);
+    expect(refresh.json()).toMatchObject({
+      tokenType: 'Bearer',
+      expiresIn: 600,
+    });
+    expect(refresh.headers['set-cookie']).toContain('HttpOnly');
+    const identity = await server.inject({
+      method: 'GET',
+      url: '/api/v1/auth/me',
+      headers: { authorization: `Bearer ${refresh.json().accessToken}` },
+    });
+    expect(identity.statusCode).toBe(200);
+    expect(identity.json()).toMatchObject({ email: 'session.e2e@example.com' });
+    const loggedOut = await server.inject({
+      method: 'POST',
+      url: '/api/v1/auth/logout',
+      headers: { authorization: `Bearer ${refresh.json().accessToken}` },
+    });
+    expect(loggedOut.statusCode).toBe(200);
+    const denied = await server.inject({
+      method: 'GET',
+      url: '/api/v1/users/me',
+      headers: { authorization: `Bearer ${refresh.json().accessToken}` },
+    });
+    expect(denied.statusCode).toBe(401);
   });
 
   afterAll(async () => {

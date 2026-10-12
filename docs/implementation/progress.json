@@ -1,15 +1,15 @@
 {
   "project": {
     "status": "in_progress",
-    "current_stage": "Stage 04 — Identity and Sessions",
-    "next_milestone": "M011"
+    "current_stage": "Stage 05 — Organizations and Authorization",
+    "next_milestone": "M012"
   },
   "stages": [
     { "id": "stage-00", "title": "Preparation", "status": "completed", "milestones": ["M000","M001","M002","M003","M004"] },
     { "id": "stage-01", "title": "Project Bootstrap", "status": "completed", "milestones": ["M005"] },
     { "id": "stage-02", "title": "HTTP and API Foundation", "status": "completed", "milestones": ["M006","M007"] },
     { "id": "stage-03", "title": "Database Infrastructure", "status": "completed", "milestones": ["M008","M009"] },
-    { "id": "stage-04", "title": "Identity and Sessions", "status": "in_progress", "milestones": ["M010","M011"] },
+    { "id": "stage-04", "title": "Identity and Sessions", "status": "completed", "milestones": ["M010","M011"] },
     { "id": "stage-05", "title": "Organizations and Authorization", "status": "pending", "milestones": ["M012","M013","M014"] },
     { "id": "stage-06", "title": "Email and Audit", "status": "pending", "milestones": ["M015"] },
     { "id": "stage-07", "title": "Example Resource", "status": "pending", "milestones": ["M016"] },
@@ -29,7 +29,7 @@
     { "id": "M008", "title": "PostgreSQL and Drizzle Infrastructure", "stage": "stage-03", "status": "completed", "dependencies": ["M007"], "contract": "milestones/M008-database-infrastructure.md", "completion": {"date":"2026-10-13","verification":["PostgreSQL 18 Testcontainers integration generated a Drizzle Kit fixture migration into a temporary directory, applied it to a fresh database, and verified table creation and transaction execution","Lint, formatting, strict typecheck, build, 14 unit tests, 11 Fastify E2E tests, and 1 integration test passed","Drizzle Kit migration check passed; progress validator and 11 tracking regression cases passed; M009 selected next"]} },
     { "id": "M009", "title": "Core Schema, Migrations, and Seeds", "stage": "stage-03", "status": "completed", "dependencies": ["M008"], "contract": "milestones/M009-core-database-schema.md", "completion": {"date":"2026-10-13","verification":["Fresh PostgreSQL 18 migration from zero passed; all 15 tables created","Reference/dev seeds repeated idempotently; dev seed production refusal passed","Composite tenant FK, reserved slug check, rollback and required index introspection passed","Formatting, lint, strict typecheck, build, 14 unit tests, 11 Fastify E2E tests, 2 PostgreSQL integration tests, Drizzle migration check and 11 progress regressions passed","Stage 03 exit criteria passed; M010 selected next"]} },
     { "id": "M010", "title": "User Credentials and Account Lifecycle", "stage": "stage-04", "status": "completed", "dependencies": ["M009"], "contract": "milestones/M010-user-account-lifecycle.md", "completion": {"date":"2026-10-13","verification":["Normalized account registration, Argon2id credential storage, single-use verification/reset tokens, recovery enumeration resistance, status enforcement and password confirmation verified against PostgreSQL 18","Concurrent token issuance limit and password-update compare-and-set behavior verified","Fastify E2E covers registration projection, duplicate email, recovery response equality, malformed input and invalid verification token","Format, lint, strict typecheck, 18 unit tests, 15 E2E tests, 7 PostgreSQL integration tests, Nest build and OpenAPI artifact check passed","Authenticated identity/profile/password-change routes assigned to M011 with approved milestone-boundary resolution","Progress tracking validation passed; M011 selected next"]} },
-    { "id": "M011", "title": "JWT Sessions and Refresh Rotation", "stage": "stage-04", "status": "pending", "dependencies": ["M010"], "contract": "milestones/M011-session-lifecycle.md" },
+    { "id": "M011", "title": "JWT Sessions and Refresh Rotation", "stage": "stage-04", "status": "completed", "dependencies": ["M010"], "contract": "milestones/M011-session-lifecycle.md", "completion": {"date":"2026-10-13","verification":["EdDSA JWT claim/signature/expiry/key rotation tests; production key validation","Fastify E2E: 16 tests across 2 suites passed, including login, refresh cookie, authenticated identity and logout revocation","PostgreSQL integration: 8 tests across 2 suites passed, including concurrent idempotent refresh, late replay revocation/audit, and password-driven session revocation","Lint, format check, strict typecheck, 22 unit tests, Nest build and OpenAPI generation/freshness check passed"]} },
     { "id": "M012", "title": "Permission Model and Authorization Policies", "stage": "stage-05", "status": "pending", "dependencies": ["M011"], "contract": "milestones/M012-authorization.md" },
     { "id": "M013", "title": "Organization Lifecycle and Ownership", "stage": "stage-05", "status": "pending", "dependencies": ["M012"], "contract": "milestones/M013-organizations.md" },
     { "id": "M014", "title": "Memberships and Invitations", "stage": "stage-05", "status": "pending", "dependencies": ["M013"], "contract": "milestones/M014-memberships-invitations.md" },

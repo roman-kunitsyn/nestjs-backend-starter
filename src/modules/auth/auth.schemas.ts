@@ -11,6 +11,15 @@ export const registerSchema = z
 export const emailSchema = z
   .object({ email: z.string().trim().email().max(320) })
   .strict();
+export const loginSchema = z
+  .object({
+    email: z.string().trim().email().max(320),
+    password: z.string().min(1).max(256),
+  })
+  .strict();
+export const confirmPasswordSchema = z
+  .object({ currentPassword: z.string().min(1).max(256) })
+  .strict();
 export const tokenSchema = z
   .object({ token: z.string().min(32).max(256) })
   .strict();

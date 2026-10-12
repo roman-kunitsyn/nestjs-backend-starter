@@ -1,7 +1,7 @@
 # M011 — JWT Sessions and Refresh Rotation
 
 **Stage:** 04 — Identity and Sessions
-**Status:** pending
+**Status:** completed
 **Dependencies:** M010
 
 ## Objective
@@ -32,13 +32,13 @@ Complete JWT access validation and server-backed device sessions with atomic opa
 
 ## Acceptance criteria
 
-- [ ] JWT uses supported asymmetric signing and validates pinned algorithm, signature, issuer, audience, expiry, claim types, user status and configured session revocation policy.
-- [ ] Login verifies credentials safely, rejects disabled/suspended accounts without account enumeration, and issues a session-bound short-lived JWT.
-- [ ] Authenticated `/auth/me`, `/users/me`, and password-change routes require a valid session-bound JWT; sensitive password changes require current-password confirmation.
-- [ ] Refresh tokens are opaque and high-entropy, stored only as digest, rotated in an atomic transaction, and never placed in localStorage.
-- [ ] Concurrent refresh is safe with narrowly bounded retry policy; consumed-token replay revokes session/family and records a security event.
-- [ ] Current logout, logout-all, list/revoke session, expiry, and cookie clearing behave correctly.
-- [ ] Cookie defaults and `kid` key rotation behavior are documented and tested.
+- [x] JWT uses EdDSA and validates pinned algorithm, signature, issuer, audience, expiry, UUID claim types, user status and session revocation.
+- [x] Login verifies credentials safely, uses uniform invalid-credential responses, and issues a session-bound short-lived JWT.
+- [x] Authenticated `/auth/me`, `/users/me`, and password-change routes require a valid session-bound JWT; password changes and logout-all require current-password confirmation.
+- [x] Refresh tokens are opaque, high-entropy and stored only as digest; rotation is atomic and tokens are cookie-only.
+- [x] Concurrent refresh retries are idempotent for two seconds; late consumed-token replay revokes the session and writes its audit event atomically.
+- [x] Current logout, logout-all, session listing/revocation, idle/absolute expiry, password-driven revocation and cookie clearing are implemented.
+- [x] Cookie defaults and active/retiring `kid` rotation configuration are documented and tested.
 
 ## Verification
 
@@ -46,4 +46,20 @@ Run JWT tests, PostgreSQL concurrent refresh/replay tests, Fastify E2E for token
 
 ## Completion checklist
 
-- [ ] Auth docs reflect implementation; replay/security evidence and staged diff reviewed.
+- [x] Auth docs reflect implementation; replay/security evidence and staged diff reviewed.
+
+## Implementation notes
+
+- Added EdDSA JWT signing with `jose`, configured issuer/audience/kid, production PEM validation, retiring public-key map support, and a guard that checks both account state and the backing session on each request.
+- Added login, refresh, identity/profile, password change, logout, logout-all, and session list/revoke endpoints. Refresh credentials are set in an HttpOnly, SameSite=Lax cookie, scoped to `/api/v1/auth`, with Secure enabled in production.
+- Refresh rotation locks the current session row and uses a keyed deterministic next token to support idempotent retries for two seconds. The production refresh key is shared across replicas; reuse outside the retry window revokes the session and records an audit event in the same transaction.
+- Password reset and password change revoke all sessions atomically with the credential update. Logout-all requires current-password confirmation.
+- No database migration was required; M009 had already provisioned session, history, and audit tables.
+
+## Verification record
+
+- `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, and `pnpm test`: passed (22 tests across 8 suites).
+- `pnpm test:e2e`: passed (16 tests across 2 suites), including login, HttpOnly cookie, refresh, authenticated identity, and logout revocation.
+- `pnpm test:integration`: passed (8 tests across 2 suites), including concurrent idempotent refresh, late replay revocation/audit, and reset/change session revocation against PostgreSQL 18.
+- `pnpm build`, `pnpm openapi:generate`, and `pnpm openapi:check`: passed.
+- Progress validation and staged diff checks: passed.
