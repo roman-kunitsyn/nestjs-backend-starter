@@ -20,7 +20,7 @@ const broken = (mutate, fragment) => {
 
 test('valid repository progress selects the earliest eligible milestone', () => {
   assert.deepEqual(validateProgress(input(baseline)), []);
-  assert.equal(selectNextMilestone(baseline), 'M005');
+  assert.equal(selectNextMilestone(baseline), baseline.project.next_milestone);
 });
 
 test('rejects duplicate milestone IDs', () => broken((p) => { p.milestones[1].id = p.milestones[0].id; }, 'unique'));
@@ -28,7 +28,7 @@ test('rejects invalid milestone status', () => broken((p) => { p.milestones[4].s
 test('rejects unknown dependency references', () => broken((p) => { p.milestones[4].dependencies = ['M999']; }, 'unknown dependency'));
 test('rejects dependency cycles', () => broken((p) => { p.milestones[0].dependencies = ['M004']; }, 'Dependency cycle'));
 test('rejects multiple active milestones', () => broken((p) => { p.milestones[5].status = 'in_progress'; p.milestones[6].status = 'in_progress'; p.stages[1].status = 'in_progress'; }, 'At most one'));
-test('rejects completed milestones with incomplete dependencies', () => broken((p) => { p.milestones[6].status = 'completed'; }, 'incomplete'));
+test('rejects completed milestones with incomplete dependencies', () => broken((p) => { p.milestones[7].status = 'completed'; }, 'incomplete'));
 test('rejects an incorrect recorded next milestone', () => broken((p) => { p.project.next_milestone = 'M004'; }, 'Wrong next milestone'));
 test('resumes blocked work before pending milestones', () => {
   const progress = structuredClone(baseline);

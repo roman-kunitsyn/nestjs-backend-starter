@@ -3,8 +3,8 @@
 > Generated from `progress.json` by `pnpm progress:dashboard`. Do not edit by hand.
 
 **Project status:** in_progress
-**Current stage:** Stage 01 — Project Bootstrap
-**Next milestone:** M005 — Project Bootstrap and Local Workflow (pending)
+**Current stage:** Stage 02 — HTTP and API Foundation
+**Next milestone:** M006 — Zod Request Validation and API Versioning (pending)
 
 ## Stage 00 — Preparation
 
@@ -20,7 +20,7 @@
 
 | Stage | Title | Milestones | Status |
 | --- | --- | --- | --- |
-| 01 | Project Bootstrap | M005 | pending |
+| 01 | Project Bootstrap | M005 | completed |
 | 02 | HTTP and API Foundation | M006–M007 | pending |
 | 03 | Database Infrastructure | M008–M009 | pending |
 | 04 | Identity and Sessions | M010–M011 | pending |

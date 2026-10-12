@@ -269,7 +269,7 @@ nestjs-backend-starter/
 └── README.md
 ```
 
-For complete architecture decisions, see `docs/architecture.md`.
+For complete architecture decisions, see [docs/architecture/overview.md](docs/architecture/overview.md).
 
 ## Getting started
 
@@ -297,7 +297,7 @@ Replace `<repository-url>` with the actual repository address.
 
 ```bash
 corepack enable
-pnpm install
+pnpm install --frozen-lockfile
 ```
 
 ### 3. Configure environment variables
@@ -306,37 +306,7 @@ pnpm install
 cp .env.example .env
 ```
 
-Update `.env` with your local configuration.
-
-Example:
-
-```dotenv
-NODE_ENV=development
-APP_NAME=nestjs-backend-starter
-APP_HOST=0.0.0.0
-APP_PORT=3000
-
-PUBLIC_API_URL=http://localhost:3000
-FRONTEND_URL=http://localhost:5173
-
-DATABASE_URL=postgresql://app:password@localhost:5432/app
-
-JWT_ISSUER=http://localhost:3000
-JWT_AUDIENCE=nestjs-backend-starter
-ACCESS_TOKEN_TTL_SECONDS=600
-
-AUTH_COOKIE_SECURE=false
-AUTH_COOKIE_SAMESITE=lax
-
-EMAIL_PROVIDER=console
-CORS_ALLOWED_ORIGINS=http://localhost:5173
-
-LOG_LEVEL=debug
-```
-
-JWT private/public signing keys must also be configured according to `.env.example`. Generate development-only keys locally and do not use them in production.
-
-All required environment variables are validated at startup with Zod.
+`.env.example` contains local-only PostgreSQL credentials and the application defaults. Startup currently validates `NODE_ENV`, `APP_NAME`, `APP_HOST`, and `PORT`; later milestones add feature-specific settings and validation. Do not use the example database password outside local development.
 
 ### 4. Start local infrastructure
 
@@ -344,31 +314,19 @@ All required environment variables are validated at startup with Zod.
 pnpm infra:up
 ```
 
-This starts the local PostgreSQL service configured in `compose.yaml`.
+This starts the local PostgreSQL service configured in `compose.yaml`. The app does not connect to the database yet; Drizzle and migration support are introduced in later milestones.
 
-### 5. Apply database migrations
-
-```bash
-pnpm db:migrate
-```
-
-### 6. Seed reference data
+### 5. Start the development server
 
 ```bash
-pnpm db:seed
+pnpm start:dev
 ```
 
-Seeds include required system roles and permissions.
+The current smoke endpoint is `GET http://127.0.0.1:3000/` and returns `Hello World!`.
 
-Development example data must be explicitly controlled and must not be automatically seeded in production.
+For the complete current setup, see [Local development](docs/operations/local-development.md).
 
-### 7. Start the development server
-
-```bash
-pnpm dev
-```
-
-Expected local URLs:
+The following API and health URLs are planned and are not available in this bootstrap milestone:
 
 | Resource          | URL                                    |
 | ----------------- | -------------------------------------- |
@@ -379,35 +337,9 @@ Expected local URLs:
 | Readiness         | `http://localhost:3000/health/ready`   |
 | Startup           | `http://localhost:3000/health/startup` |
 
-These URLs assume default local configuration.
-
 ## Environment configuration
 
-Configuration is validated using Zod and accessed through typed application configuration services.
-
-Important variables:
-
-| Variable                      | Purpose                       |
-| ----------------------------- | ----------------------------- |
-| `NODE_ENV`                    | Application environment       |
-| `APP_HOST`                    | HTTP bind address             |
-| `APP_PORT`                    | HTTP port                     |
-| `DATABASE_URL`                | PostgreSQL connection URL     |
-| `DATABASE_POOL_MAX`           | Maximum pool connections      |
-| `JWT_ISSUER`                  | JWT issuer                    |
-| `JWT_AUDIENCE`                | JWT audience                  |
-| `JWT_PRIVATE_KEY`             | Access-token signing key      |
-| `JWT_PUBLIC_KEY`              | Access-token verification key |
-| `JWT_KEY_ID`                  | Signing key identifier        |
-| `ACCESS_TOKEN_TTL_SECONDS`    | Access-token lifetime         |
-| `REFRESH_TOKEN_IDLE_TTL_DAYS` | Refresh idle expiration       |
-| `REFRESH_TOKEN_MAX_TTL_DAYS`  | Maximum session lifetime      |
-| `AUTH_COOKIE_SECURE`          | Secure cookie behavior        |
-| `AUTH_COOKIE_SAMESITE`        | SameSite cookie policy        |
-| `CORS_ALLOWED_ORIGINS`        | Allowed frontend origins      |
-| `EMAIL_PROVIDER`              | Selected email adapter        |
-| `LOG_LEVEL`                   | Logging verbosity             |
-| `OTEL_ENABLED`                | Optional tracing              |
+The bootstrap currently validates `NODE_ENV`, `APP_NAME`, `APP_HOST`, and `PORT` with Zod. Database, authentication, email, and observability settings will be added with their implementation milestones.
 
 Never commit `.env` files or production credentials.
 
@@ -561,7 +493,7 @@ A typical SPA authentication flow:
 
 The backend must enforce appropriate CORS, cookie, origin, and CSRF rules for the deployment topology.
 
-See `docs/authentication.md`.
+See `docs/architecture/authentication.md`.
 
 ## Organizations and multi-tenancy
 
@@ -618,7 +550,7 @@ POST   /api/v1/organizations/:organizationId/leave
 
 Every active organization must retain at least one active owner.
 
-See `docs/multi-tenancy.md` and `docs/authorization.md`.
+See `docs/architecture/multi-tenancy.md` and `docs/architecture/authorization.md`.
 
 ## Database
 
@@ -670,7 +602,7 @@ Do not run schema-destructive development commands against production databases.
 
 Production migrations execute through a dedicated deployment step, not during application startup.
 
-See `docs/database.md`.
+See `docs/architecture/database.md`.
 
 ## Creating business modules
 
@@ -837,7 +769,7 @@ Core requirements:
 
 Never expose database credentials, JWT private keys, refresh tokens, password hashes, or internal stack traces.
 
-See `docs/security.md`.
+See `docs/architecture/security.md`.
 
 ## Docker
 
@@ -917,7 +849,7 @@ Do not run database migrations independently in each application pod.
 - TLS-enabled ingress.
 - Managed PostgreSQL.
 
-See `docs/deployment.md`.
+See `docs/architecture/deployment.md`.
 
 ## CI/CD
 
@@ -958,7 +890,7 @@ Database migrations must be compatible with rolling application updates.
 
 | Command                 | Description                      |
 | ----------------------- | -------------------------------- |
-| `pnpm dev`              | Start development server         |
+| `pnpm start:dev`        | Start the Fastify-backed Nest application |
 | `pnpm build`            | Build application                |
 | `pnpm start:prod`       | Start compiled application       |
 | `pnpm lint`             | Run ESLint                       |
@@ -967,37 +899,27 @@ Database migrations must be compatible with rolling application updates.
 | `pnpm format:check`     | Check formatting                 |
 | `pnpm typecheck`        | Check TypeScript types           |
 | `pnpm test`             | Unit tests                       |
-| `pnpm test:coverage`    | Coverage report                  |
-| `pnpm test:integration` | Database integration tests       |
 | `pnpm test:e2e`         | End-to-end tests                 |
-| `pnpm db:generate`      | Generate Drizzle migrations      |
-| `pnpm db:migrate`       | Apply migrations                 |
-| `pnpm db:check`         | Validate migration configuration |
-| `pnpm db:studio`        | Open Drizzle Studio              |
-| `pnpm db:seed`          | Seed reference data              |
-| `pnpm openapi:generate` | Generate API specification       |
-| `pnpm openapi:check`    | Validate API specification       |
 | `pnpm infra:up`         | Start local infrastructure       |
 | `pnpm infra:down`       | Stop local infrastructure        |
-| `pnpm helm:lint`        | Validate Helm chart              |
 
-All scripts listed here are part of the implementation contract. Confirm they exist and work before removing the project-status notice.
+Database migrations and other planned scripts will be added with their milestones. The project-status notice remains until final acceptance verifies the full command set.
 
 ## Documentation
 
 | Document                  | Description                                     |
 | ------------------------- | ----------------------------------------------- |
-| `docs/architecture.md`    | System architecture and module boundaries       |
-| `docs/api-conventions.md` | REST conventions, errors, and pagination        |
-| `docs/authentication.md`  | Authentication and session lifecycle            |
-| `docs/authorization.md`   | RBAC and ownership policies                     |
-| `docs/multi-tenancy.md`   | Organization-based tenant isolation             |
-| `docs/database.md`        | Drizzle, schemas, migrations, transactions      |
-| `docs/deployment.md`      | Docker, Kubernetes, Helm, CI/CD                 |
-| `docs/security.md`        | Security requirements and threat considerations |
-| `docs/development.md`     | Local development and coding conventions        |
+| `docs/architecture/overview.md` | System architecture and module boundaries |
+| `docs/architecture/api-conventions.md` | REST conventions, errors, and pagination |
+| `docs/architecture/authentication.md` | Authentication and session lifecycle |
+| `docs/architecture/authorization.md` | RBAC and ownership policies |
+| `docs/architecture/multi-tenancy.md` | Organization-based tenant isolation |
+| `docs/architecture/database.md` | Drizzle, schemas, migrations, transactions |
+| `docs/architecture/deployment.md` | Docker, Kubernetes, Helm, CI/CD |
+| `docs/architecture/security.md` | Security requirements and threat considerations |
+| `docs/operations/local-development.md` | Current local development setup |
 
-The complete starter specification is maintained separately as `nestjs-backend-starter-architecture-2026.md`, if included in the repository.
+The complete source specification is preserved at `docs/reference/nestjs-backend-starter-architecture-2026.md`.
 
 ## Planned extensions
 

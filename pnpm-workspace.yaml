@@ -1,0 +1,8 @@
+packages: []
+autoInstallPeers: false
+
+# These optional native accelerators have JavaScript fallbacks and are not
+# required to build, lint, test, or run the application.
+allowBuilds:
+  '@parcel/watcher': false
+  unrs-resolver: false
