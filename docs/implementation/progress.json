@@ -1,0 +1,66 @@
+{
+  "project": {
+    "status": "preparation",
+    "current_stage": "Stage 00 — Preparation",
+    "next_milestone": "M001"
+  },
+  "stages": [
+    {
+      "id": "stage-00",
+      "title": "Preparation",
+      "status": "in_progress",
+      "milestones": ["M000", "M001", "M002", "M003", "M004"]
+    }
+  ],
+  "milestones": [
+    {
+      "id": "M000",
+      "title": "Documentation Structure",
+      "stage": "stage-00",
+      "status": "completed",
+      "dependencies": [],
+      "contract": "milestones/M000-documentation-structure.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Documentation navigation and bootstrap records inspected",
+          "Progress JSON parsed and next milestone resolved as M001",
+          "Original architecture reference confirmed unchanged",
+          "Staged diff whitespace check passed"
+        ]
+      }
+    },
+    {
+      "id": "M001",
+      "title": "Architecture Decomposition",
+      "stage": "stage-00",
+      "status": "pending",
+      "dependencies": ["M000"],
+      "contract": "milestones/M001-architecture-decomposition.md"
+    },
+    {
+      "id": "M002",
+      "title": "Architecture Reconciliation",
+      "stage": "stage-00",
+      "status": "pending",
+      "dependencies": ["M001"],
+      "contract": "milestones/M002-architecture-reconciliation.md"
+    },
+    {
+      "id": "M003",
+      "title": "Complete Implementation Roadmap",
+      "stage": "stage-00",
+      "status": "pending",
+      "dependencies": ["M002"],
+      "contract": "milestones/M003-complete-implementation-roadmap.md"
+    },
+    {
+      "id": "M004",
+      "title": "Execution Readiness",
+      "stage": "stage-00",
+      "status": "pending",
+      "dependencies": ["M003"],
+      "contract": "milestones/M004-execution-readiness.md"
+    }
+  ]
+}
