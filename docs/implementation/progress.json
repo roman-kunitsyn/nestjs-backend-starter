@@ -1,11 +1,11 @@
 {
   "project": {
-    "status": "preparation",
-    "current_stage": "Stage 00 — Preparation",
-    "next_milestone": "M004"
+    "status": "in_progress",
+    "current_stage": "Stage 01 — Project Bootstrap",
+    "next_milestone": "M005"
   },
   "stages": [
-    { "id": "stage-00", "title": "Preparation", "status": "in_progress", "milestones": ["M000", "M001", "M002", "M003", "M004"] },
+    { "id": "stage-00", "title": "Preparation", "status": "completed", "milestones": ["M000", "M001", "M002", "M003", "M004"] },
     { "id": "stage-01", "title": "Project Bootstrap", "status": "pending", "milestones": ["M005"] },
     { "id": "stage-02", "title": "HTTP and API Foundation", "status": "pending", "milestones": ["M006", "M007"] },
     { "id": "stage-03", "title": "Database Infrastructure", "status": "pending", "milestones": ["M008", "M009"] },
@@ -38,7 +38,11 @@
       "contract": "milestones/M003-complete-implementation-roadmap.md",
       "completion": { "date": "2026-10-13", "verification": ["Stages 00–10 and milestones M000–M022 defined", "Requirement matrix and definitions of done created", "All planned contracts, including M004, created", "Progress graph and documentation links validated", "Staged diff whitespace check passed"] }
     },
-    { "id": "M004", "title": "Execution Readiness", "stage": "stage-00", "status": "pending", "dependencies": ["M003"], "contract": "milestones/M004-execution-readiness.md" },
+    {
+      "id": "M004", "title": "Execution Readiness", "stage": "stage-00", "status": "completed", "dependencies": ["M003"],
+      "contract": "milestones/M004-execution-readiness.md",
+      "completion": { "date": "2026-10-13", "verification": ["Progress validator checks IDs, statuses, stage/order, dependency graph, contracts, traceability, and deterministic selection", "Regression cases passed for duplicate ID, invalid status/reference, dependency cycle, multiple active milestones, incomplete dependency, and wrong next milestone", "Dashboard regenerated and verified; active-work recovery behavior checked", "Stage 00 exit criteria passed; M005 selected as next milestone"] }
+    },
     { "id": "M005", "title": "Project Bootstrap and Local Workflow", "stage": "stage-01", "status": "pending", "dependencies": ["M004"], "contract": "milestones/M005-project-bootstrap.md" },
     { "id": "M006", "title": "Zod Request Validation and API Versioning", "stage": "stage-02", "status": "pending", "dependencies": ["M005"], "contract": "milestones/M006-zod-validation.md" },
     { "id": "M007", "title": "Problem Details, Logging, and OpenAPI", "stage": "stage-02", "status": "pending", "dependencies": ["M006"], "contract": "milestones/M007-http-contracts.md" },

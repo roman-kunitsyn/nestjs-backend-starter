@@ -1,10 +1,10 @@
 # Implementation progress
 
-> Human-readable summary of `progress.json`. Update both in the same milestone handoff.
+> Generated from `progress.json` by `pnpm progress:dashboard`. Do not edit by hand.
 
-**Project status:** preparation
-**Current stage:** Stage 00 — Preparation
-**Next milestone:** M004 — Execution Readiness (pending)
+**Project status:** in_progress
+**Current stage:** Stage 01 — Project Bootstrap
+**Next milestone:** M005 — Project Bootstrap and Local Workflow (pending)
 
 ## Stage 00 — Preparation
 
@@ -14,7 +14,7 @@
 | M001 | Architecture Decomposition | completed | M000 |
 | M002 | Architecture Reconciliation | completed | M001 |
 | M003 | Complete Implementation Roadmap | completed | M002 |
-| M004 | Execution Readiness | pending | M003 |
+| M004 | Execution Readiness | completed | M003 |
 
 ## Implementation stages
 
@@ -31,4 +31,4 @@
 | 09 | Production Deployment | M019–M021 | pending |
 | 10 | Final Verification | M022 | pending |
 
-M000 established navigation; M001 decomposed the full source; M002 reconciled its issues; M003 defined the complete roadmap, contracts, traceability, and completion gates. M004 is next to validate progress tooling and execution readiness.
+Stage 00 is completed. M004 validates tracking and execution readiness; M005 begins application implementation.

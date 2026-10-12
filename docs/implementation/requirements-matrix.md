@@ -4,6 +4,7 @@ This matrix maps the preserved source specification and higher-authority instruc
 
 | Requirement area | Authoritative source | Planned milestone coverage | Verification evidence expected |
 | --- | --- | --- | --- |
+| Documentation architecture, source decomposition/reconciliation, finite roadmap, and deterministic recovery/progress tracking | AGENTS.md §§4–8, 14–15 | M000, M001, M002, M003, M004 | Documentation/source audit; roadmap and traceability audit; progress validator fixtures; fresh-session selector |
 | Project purpose, supported use cases, modular monolith, scope boundaries | AGENTS.md §§1, 3–6; source §§1–2 | M005, M022 | Architecture review; scope/traceability audit |
 | Runtime, strict TS, Nest/Fastify, pnpm, dependency compatibility and lockfile | AGENTS.md §3; source §§1.2, 4 | M005 | Frozen install, lint, typecheck, build; dependency/adapter inspection |
 | Layering, module boundaries, repository layout and coding conventions | AGENTS.md §§3, 11; source §§2–4, 21 | M005, M010–M018, M022 | Build/type checks; module review; final architecture review |

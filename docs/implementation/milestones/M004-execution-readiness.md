@@ -1,7 +1,7 @@
 # M004 — Execution Readiness
 
 **Stage:** 00 — Preparation
-**Status:** pending
+**Status:** completed
 **Dependencies:** M003
 
 ## Objective
@@ -36,13 +36,13 @@ Initialize and validate the progress tracker, milestone selector, and recovery/e
 
 ## Acceptance criteria
 
-- [ ] Unique milestone IDs, valid status values and references, acyclic dependencies, valid contracts, and stage/roadmap ordering are checked by tooling.
-- [ ] Completed milestones cannot have unfinished dependencies; at most one milestone is active; project/stage status is consistent.
-- [ ] Requirements coverage is checked and next selection returns the earliest eligible milestone or reports no eligible work.
-- [ ] Dashboard agrees with authoritative progress JSON.
-- [ ] An interrupted in-progress or blocked milestone is resumed before selecting pending work.
-- [ ] Stage 00 exit criteria pass and M005 is selected from repository files alone.
-- [ ] No feature implementation has begun.
+- [x] Unique milestone IDs, valid status values and references, acyclic dependencies, valid contracts, and stage/roadmap ordering are checked by tooling.
+- [x] Completed milestones cannot have unfinished dependencies; at most one milestone is active; project/stage status is consistent.
+- [x] Requirements coverage is checked and next selection returns the earliest eligible milestone or reports no eligible work.
+- [x] Dashboard agrees with authoritative progress JSON.
+- [x] An interrupted in-progress or blocked milestone is resumed before selecting pending work.
+- [x] Stage 00 exit criteria pass and M005 is selected from repository files alone.
+- [x] No feature implementation has begun.
 
 ## Verification requirements
 
@@ -52,7 +52,14 @@ Initialize and validate the progress tracker, milestone selector, and recovery/e
 
 ## Completion checklist
 
-- [ ] Acceptance criteria and validator cases pass.
-- [ ] Progress JSON/dashboard and Stage 00 completion state agree.
-- [ ] M005 resolves as the next eligible milestone from repository files alone.
-- [ ] Relevant changes are staged and staged diff reviewed; no commit created.
+- [x] Acceptance criteria and validator cases pass.
+- [x] Progress JSON/dashboard and Stage 00 completion state agree.
+- [x] M005 resolves as the next eligible milestone from repository files alone.
+- [x] Relevant changes are staged and staged diff reviewed; no commit created.
+
+## Implementation notes
+
+- Added dependency-free Node tooling: validator, blocked/in-progress recovery selector, and dashboard renderer, exposed through package scripts.
+- Added malformed-state regression tests for duplicate IDs, invalid status/reference, dependency cycle, multiple active milestones, incomplete dependency, and incorrect next milestone.
+- Extended requirements traceability to include Stage 00 preparation and documented recovery/CLI procedures.
+- No application feature code was added. M005 remains pending.
