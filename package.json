@@ -29,16 +29,23 @@
     "progress:validate": "node scripts/progress.mjs validate",
     "progress:select": "node scripts/progress.mjs select",
     "progress:dashboard": "node scripts/progress.mjs dashboard",
-    "progress:test": "node --test scripts/progress.test.mjs"
+    "progress:test": "node --test scripts/progress.test.mjs",
+    "openapi:generate": "pnpm build && node scripts/openapi.mjs generate",
+    "openapi:check": "node scripts/openapi.mjs check"
   },
   "dependencies": {
+    "@fastify/static": "^10.1.6",
     "@nestjs/common": "^12.0.1",
     "@nestjs/config": "^12.0.1",
     "@nestjs/core": "^12.1.2",
     "@nestjs/platform-fastify": "^12.1.2",
+    "@nestjs/swagger": "^12.0.2",
     "fastify": "^5.12.5",
+    "nestjs-pino": "^5.3.1",
+    "pino-http": "^11.0.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
+    "yaml": "^2.9.1",
     "zod": "^4.6.6"
   },
   "devDependencies": {

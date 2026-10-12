@@ -30,12 +30,12 @@ Provide consistent safe HTTP errors, request correlation, structured logging, an
 
 ## Acceptance criteria
 
-- [ ] Errors use `application/problem+json`, stable status/code/request ID, field validation details where applicable, and no stack/raw SQL leakage in production.
-- [ ] One request ID is propagated to response header, error body, structured logs, and relevant request context.
-- [ ] Pino redacts credentials, authorization headers, tokens, passwords, and configured secrets.
-- [ ] OpenAPI documents actual routes and supported input/output schemas, auth, success/error responses, tags, and stable operation IDs.
-- [ ] Generated OpenAPI version and schema dialect are validated; no false 3.1 declaration; JSON/YAML generation and contract check scripts work.
-- [ ] Unsupported sort/pagination input fails safely; cursors are opaque and bound to query/tenant context when used.
+- [x] Errors use `application/problem+json`, stable status/code/request ID, field validation details where applicable, and no stack/raw SQL leakage in production.
+- [x] One request ID is propagated to response header, error body, structured logs, and relevant request context.
+- [x] Pino redacts credentials, authorization headers, tokens, passwords, and cookie/API-key fields.
+- [x] OpenAPI documents actual routes and supported input/output schemas, auth, success/error responses, tags, and stable operation IDs.
+- [x] Generated OpenAPI version and schema dialect are validated; no false 3.1 declaration; JSON/YAML generation and contract check scripts work.
+- [x] Unsupported sort/pagination input fails safely; cursors are opaque and bound to query/tenant context when used.
 
 ## Verification
 
@@ -43,4 +43,12 @@ Run error mapping tests, request ID/log redaction tests, generated contract vali
 
 ## Completion checklist
 
-- [ ] Contract and error behavior documented; quality checks and staged handoff pass.
+- [x] Contract and error behavior documented; quality checks and staged handoff pass.
+
+## Implementation notes
+
+- Added a shared Problem Details filter for Nest exceptions and a Fastify root handler for malformed/payload-limit requests, both correlated with the response header.
+- Configured Fastify and Nest Pino logging with sensitive-header, credential, password, token, and cookie redaction. Incoming request IDs pass a strict character/length check.
+- Added the `/docs`, `/openapi.json`, and `/openapi.yaml` endpoints. UI exposure defaults off in production via `API_DOCS_ENABLED`.
+- Generated OpenAPI 3.1.0 artifacts from the initialized Nest app, including the actual `/api/v1` starter route, documented success/problem responses, bearer auth scheme, and stable operation ID. `openapi:check` rejects stale or invalid artifacts.
+- Added allowlisted pagination schema construction and signed cursors bound to query and optional tenant context.

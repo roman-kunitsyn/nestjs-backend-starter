@@ -16,11 +16,11 @@ pnpm infra:up
 pnpm start:dev
 ```
 
-The API binds to `APP_HOST` and `PORT`. The starter route is `GET /` and returns the plain text `Hello World!`. PostgreSQL is available on `POSTGRES_PORT` (5432 by default); database access, migrations, and seeds are added in later milestones. The Compose database uses a named volume and a development-only password. `pnpm infra:down` stops the service and keeps its data; remove the volume only when you intentionally want to discard the local database.
+The API binds to `APP_HOST` and `PORT`. The starter route is `GET /api/v1` and returns the plain text `Hello World!`. Interactive Swagger UI is available at `/docs`; the JSON and YAML contracts are served at `/openapi.json` and `/openapi.yaml`. PostgreSQL is available on `POSTGRES_PORT` (5432 by default); database access, migrations, and seeds are added in later milestones. The Compose database uses a named volume and a development-only password. `pnpm infra:down` stops the service and keeps its data; remove the volume only when you intentionally want to discard the local database.
 
 ## Configuration
 
-Copy `.env.example` to `.env`. At startup, Zod validates `NODE_ENV`, `APP_NAME`, `APP_HOST`, and `PORT`. Invalid values stop startup with field names and safe issue messages; configuration values are not included in the error. PostgreSQL variables are read by Compose. The example password and connection URL are local development values only and must never be used for a deployed environment.
+Copy `.env.example` to `.env`. At startup, Zod validates `NODE_ENV`, `APP_NAME`, `APP_HOST`, `PORT`, and optional `API_DOCS_ENABLED`. Docs UI is enabled by default outside production and disabled by default in production; set `API_DOCS_ENABLED=true` only when interactive docs are intended to be public. Raw OpenAPI JSON/YAML endpoints remain available for clients and deployment checks. Invalid values stop startup with field names and safe issue messages; configuration values are not included in the error. PostgreSQL variables are read by Compose. The example password and connection URL are local development values only and must never be used for a deployed environment.
 
 ## Quality commands
 
@@ -31,9 +31,13 @@ pnpm typecheck
 pnpm test
 pnpm test:e2e
 pnpm build
+pnpm openapi:generate
+pnpm openapi:check
 ```
 
 The E2E smoke test exercises the Nest application through Fastify's injection interface and does not require PostgreSQL. The unit test runner is Jest in native ESM mode. Type checking runs separately from Jest.
+
+`pnpm openapi:generate` builds the application and writes `artifacts/openapi.json` and `artifacts/openapi.yaml`. `pnpm openapi:check` rebuilds the document and fails if the committed artifacts are stale or do not satisfy the OpenAPI 3.1 route/operation checks.
 
 ## Local database lifecycle
 

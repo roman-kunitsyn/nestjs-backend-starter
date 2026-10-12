@@ -7,7 +7,24 @@ describe('environment configuration', () => {
       APP_NAME: 'nestjs-backend-starter',
       APP_HOST: '127.0.0.1',
       PORT: 3000,
+      API_DOCS_ENABLED: true,
     });
+  });
+
+  it('disables interactive API docs by default in production while allowing explicit configuration', () => {
+    expect(
+      validateEnvironment({ NODE_ENV: 'production' }).API_DOCS_ENABLED,
+    ).toBe(false);
+    expect(
+      validateEnvironment({ NODE_ENV: 'production', API_DOCS_ENABLED: 'true' })
+        .API_DOCS_ENABLED,
+    ).toBe(true);
+  });
+
+  it('rejects unsupported API_DOCS_ENABLED values', () => {
+    expect(() =>
+      validateEnvironment({ API_DOCS_ENABLED: 'sometimes' }),
+    ).toThrow('API_DOCS_ENABLED:');
   });
 
   it('parses configured port values', () => {

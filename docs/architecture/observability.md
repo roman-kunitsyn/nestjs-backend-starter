@@ -8,6 +8,8 @@ Use Pino through Nest integration. Support timestamp, level, service, environmen
 
 Assign or propagate a trusted request ID and expose `X-Request-ID`. Include it in request/error logs, Problem Details, relevant audit events, and traces when enabled.
 
+The Fastify Pino logger assigns the ID and logs request completion. Nest uses `nestjs-pino` for application and exception logs. Redact authorization/cookie/API-key headers, password and token fields, and cookie response headers. Never log request bodies as a general logging feature. Interactive Swagger UI is disabled by default in production with `API_DOCS_ENABLED`; generated JSON/YAML remain available for contract tooling.
+
 ## Metrics and traces
 
 Expose/export `http_requests_total`, `http_request_duration_seconds`, `http_inflight_requests`, database active/idle pool connections, `authentication_failures_total`, `refresh_token_reuse_total`, and `email_delivery_failures_total`. Avoid unbounded cardinality; never use raw user/org IDs, tokens, or emails as Prometheus labels.

@@ -36,8 +36,12 @@ test('rejects completed milestones with incomplete dependencies', () => broken((
 test('rejects an incorrect recorded next milestone', () => broken((p) => { p.project.next_milestone = 'M004'; }, 'Wrong next milestone'));
 test('allows an active stage to contain completed work and pending milestones', () => {
   const progress = structuredClone(baseline);
+  progress.milestones.find(({ id }) => id === 'M007').status = 'pending';
   const stage = progress.stages.find(({ id }) => id === 'stage-02');
   stage.status = 'in_progress';
+  progress.project.status = 'in_progress';
+  progress.project.current_stage = 'Stage 02 — HTTP and API Foundation';
+  progress.project.next_milestone = 'M007';
   assert.ok(!validateProgress(input(progress)).some((error) => error.includes('stage-02')));
 });
 test('resumes blocked work before pending milestones', () => {

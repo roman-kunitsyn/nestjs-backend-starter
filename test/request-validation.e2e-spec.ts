@@ -8,16 +8,21 @@ import {
   Query,
 } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import {
-  FastifyAdapter,
-  NestFastifyApplication,
-} from '@nestjs/platform-fastify';
+import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { z } from 'zod';
+import { APP_FILTER } from '@nestjs/core';
+import { LoggerModule } from 'nestjs-pino';
 import {
   API_BODY_LIMIT_BYTES,
   configureApiRouting,
 } from '../src/common/api-routing.js';
 import { ZodValidationPipe } from '../src/common/pipes/zod-validation.pipe.js';
+import { ProblemDetailsFilter } from '../src/common/filters/problem-details.filter.js';
+import {
+  configureAdapterProblemDetails,
+  configureRequestCorrelation,
+  createHttpAdapter,
+} from '../src/common/http/request-id.js';
 
 const createSchema = z
   .object({
@@ -34,6 +39,11 @@ const listSchema = z
 
 @Controller('validation-probe')
 class ValidationProbeController {
+  @Get('failure')
+  fail(): never {
+    throw new Error('SELECT password FROM private_users');
+  }
+
   @Post()
   create(
     @Body(new ZodValidationPipe(createSchema))
@@ -60,7 +70,11 @@ class HealthProbeController {
   }
 }
 
-@Module({ controllers: [ValidationProbeController, HealthProbeController] })
+@Module({
+  imports: [LoggerModule.forRoot({ pinoHttp: { level: 'silent' } })],
+  controllers: [ValidationProbeController, HealthProbeController],
+  providers: [{ provide: APP_FILTER, useClass: ProblemDetailsFilter }],
+})
 class RequestValidationTestModule {}
 
 describe('Request validation (Fastify E2E)', () => {
@@ -69,11 +83,13 @@ describe('Request validation (Fastify E2E)', () => {
   beforeAll(async () => {
     app = await NestFactory.create<NestFastifyApplication>(
       RequestValidationTestModule,
-      new FastifyAdapter({ bodyLimit: API_BODY_LIMIT_BYTES }),
+      createHttpAdapter(API_BODY_LIMIT_BYTES),
       { logger: false },
     );
     configureApiRouting(app);
+    configureRequestCorrelation(app);
     await app.init();
+    configureAdapterProblemDetails(app);
     await app.getHttpAdapter().getInstance().ready();
   });
 
@@ -123,7 +139,16 @@ describe('Request validation (Fastify E2E)', () => {
         payload,
       });
       expect(response.statusCode).toBe(400);
-      expect(response.json().code).toBe('VALIDATION_ERROR');
+      expect(response.headers['content-type']).toContain(
+        'application/problem+json',
+      );
+      expect(response.json()).toMatchObject({
+        status: 400,
+        title: 'Bad Request',
+        code: 'VALIDATION_ERROR',
+        requestId: response.headers['x-request-id'],
+      });
+      expect(response.json().issues).toEqual(expect.any(Array));
     }
   });
 
@@ -141,6 +166,22 @@ describe('Request validation (Fastify E2E)', () => {
     }
   });
 
+  it('sanitizes unexpected exception details from Problem Details responses', async () => {
+    const response = await app.getHttpAdapter().getInstance().inject({
+      method: 'GET',
+      url: '/api/v1/validation-probe/failure',
+    });
+    expect(response.statusCode).toBe(500);
+    expect(response.headers['content-type']).toContain(
+      'application/problem+json',
+    );
+    expect(response.json()).toMatchObject({
+      title: 'Internal Server Error',
+      code: 'INTERNAL_ERROR',
+    });
+    expect(response.body).not.toContain('SELECT password');
+  });
+
   it('rejects request bodies larger than the configured limit', async () => {
     const response = await app
       .getHttpAdapter()
@@ -151,5 +192,36 @@ describe('Request validation (Fastify E2E)', () => {
         payload: { name: 'x'.repeat(API_BODY_LIMIT_BYTES + 1), role: 'member' },
       });
     expect(response.statusCode).toBe(413);
+    expect(response.headers['content-type']).toContain(
+      'application/problem+json',
+    );
+    expect(response.json()).toMatchObject({
+      status: 413,
+      code: 'PAYLOAD_TOO_LARGE',
+    });
+  });
+
+  it('propagates a syntactically valid supplied request ID and replaces invalid values', async () => {
+    const supplied = await app
+      .getHttpAdapter()
+      .getInstance()
+      .inject({
+        method: 'POST',
+        url: '/api/v1/validation-probe',
+        headers: { 'x-request-id': 'client.trace-01' },
+        payload: { name: '', role: 'member' },
+      });
+    expect(supplied.headers['x-request-id']).toBe('client.trace-01');
+    expect(supplied.json().requestId).toBe('client.trace-01');
+
+    const rejected = await app
+      .getHttpAdapter()
+      .getInstance()
+      .inject({
+        method: 'GET',
+        url: '/api/v1/validation-probe/not-a-uuid',
+        headers: { 'x-request-id': 'bad id\nforged' },
+      });
+    expect(rejected.headers['x-request-id']).toMatch(/^req_[0-9a-f-]{36}$/);
   });
 });

@@ -1,11 +1,15 @@
 import { NestFactory } from '@nestjs/core';
-import {
-  FastifyAdapter,
-  NestFastifyApplication,
-} from '@nestjs/platform-fastify';
+import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module.js';
 import { EnvironmentConfig } from './config/environment.js';
+import { PinoLogger } from 'nestjs-pino';
+import { createOpenApiDocument, setupOpenApi } from './common/openapi.js';
+import {
+  configureAdapterProblemDetails,
+  configureRequestCorrelation,
+  createHttpAdapter,
+} from './common/http/request-id.js';
 import {
   API_BODY_LIMIT_BYTES,
   configureApiRouting,
@@ -13,13 +17,23 @@ import {
 
 const app = await NestFactory.create<NestFastifyApplication>(
   AppModule,
-  new FastifyAdapter({ bodyLimit: API_BODY_LIMIT_BYTES }),
+  createHttpAdapter(API_BODY_LIMIT_BYTES),
   { bufferLogs: true },
 );
 const config = app.get(ConfigService<EnvironmentConfig>);
 
 configureApiRouting(app);
+configureRequestCorrelation(app);
+app.useLogger(app.get(PinoLogger));
+const openApi = createOpenApiDocument(app);
+setupOpenApi(
+  app,
+  openApi,
+  config.getOrThrow('API_DOCS_ENABLED', { infer: true }),
+);
 app.enableShutdownHooks();
+await app.init();
+configureAdapterProblemDetails(app);
 await app.listen(
   config.getOrThrow('PORT', { infer: true }),
   config.getOrThrow('APP_HOST', { infer: true }),
