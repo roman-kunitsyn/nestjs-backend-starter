@@ -10,7 +10,6 @@ import {
   Req,
   Res,
   UnauthorizedException,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { FastifyReply, FastifyRequest } from 'fastify';
@@ -26,7 +25,7 @@ import {
   tokenSchema,
 } from './auth.schemas.js';
 import { SessionService } from './session.service.js';
-import { SessionGuard } from './session.guard.js';
+import { Public } from './access-control.js';
 
 const COOKIE = 'refresh_token';
 const cookieValue = (request: FastifyRequest) => {
@@ -57,6 +56,7 @@ export class AuthController {
     private readonly sessions: SessionService,
   ) {}
   @Post('register')
+  @Public()
   @ApiOperation({ operationId: 'registerUser', summary: 'Create an account' })
   register(
     @Body(new ZodValidationPipe(registerSchema))
@@ -65,6 +65,7 @@ export class AuthController {
     return this.auth.register(body);
   }
   @Post('verify-email')
+  @Public()
   @HttpCode(HttpStatus.OK)
   verifyEmail(
     @Body(new ZodValidationPipe(tokenSchema)) body: typeof tokenSchema._output,
@@ -72,6 +73,7 @@ export class AuthController {
     return this.auth.verifyEmail(body.token);
   }
   @Post('resend-verification')
+  @Public()
   @HttpCode(HttpStatus.ACCEPTED)
   resendVerification(
     @Body(new ZodValidationPipe(emailSchema)) body: typeof emailSchema._output,
@@ -79,6 +81,7 @@ export class AuthController {
     return this.auth.resendVerification(body.email);
   }
   @Post('forgot-password')
+  @Public()
   @HttpCode(HttpStatus.ACCEPTED)
   forgotPassword(
     @Body(new ZodValidationPipe(emailSchema)) body: typeof emailSchema._output,
@@ -86,6 +89,7 @@ export class AuthController {
     return this.auth.forgotPassword(body.email);
   }
   @Post('reset-password')
+  @Public()
   @HttpCode(HttpStatus.OK)
   resetPassword(
     @Body(new ZodValidationPipe(resetSchema)) body: typeof resetSchema._output,
@@ -93,6 +97,7 @@ export class AuthController {
     return this.auth.resetPassword(body.token, body.password);
   }
   @Post('login')
+  @Public()
   @HttpCode(HttpStatus.OK)
   async login(
     @Body(new ZodValidationPipe(loginSchema)) body: typeof loginSchema._output,
@@ -114,6 +119,7 @@ export class AuthController {
     };
   }
   @Post('refresh')
+  @Public()
   @HttpCode(HttpStatus.OK)
   async refresh(
     @Req() request: FastifyRequest,
@@ -141,7 +147,6 @@ export class AuthController {
     }
   }
   @Post('logout')
-  @UseGuards(SessionGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   async logout(
@@ -154,7 +159,6 @@ export class AuthController {
     return result;
   }
   @Post('logout-all')
-  @UseGuards(SessionGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   async logoutAll(
@@ -172,25 +176,21 @@ export class AuthController {
     return result;
   }
   @Get('me')
-  @UseGuards(SessionGuard)
   @ApiBearerAuth()
   me(@Req() request: FastifyRequest) {
     return this.auth.profile(request.identity!.userId);
   }
   @Get('sessions')
-  @UseGuards(SessionGuard)
   @ApiBearerAuth()
   sessionsList(@Req() request: FastifyRequest) {
     return this.sessions.list(request.identity!.userId);
   }
   @Delete('sessions/:id')
-  @UseGuards(SessionGuard)
   @ApiBearerAuth()
   revoke(@Req() request: FastifyRequest, @Param('id') id: string) {
     return this.sessions.revoke(request.identity!.userId, id);
   }
   @Post('change-password')
-  @UseGuards(SessionGuard)
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   async changePassword(

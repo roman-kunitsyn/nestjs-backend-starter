@@ -1,7 +1,7 @@
 # M012 — Permission Model and Authorization Policies
 
 **Stage:** 05 — Organizations and Authorization
-**Status:** pending
+**Status:** completed
 **Dependencies:** M011
 
 ## Objective
@@ -29,11 +29,11 @@ Implement deny-by-default permission-based RBAC and centralized, testable organi
 
 ## Acceptance criteria
 
-- [ ] Missing/invalid auth yields 401; explicitly forbidden requests yield 403; concealed cross-tenant resources yield 404 where specified.
-- [ ] Permissions are resolved against current active membership and organization state, not trusted long-lived role claims alone.
-- [ ] Sensitive use cases call centralized service policies even when route guards/decorators are present.
-- [ ] OWNER/ADMIN/MEMBER/VIEWER permission sets are seeded/documented and least-privilege behavior tested.
-- [ ] No undocumented platform admin bypass exists.
+- [x] Missing/invalid auth yields 401; explicitly forbidden requests yield 403; concealed cross-tenant resources yield 404 where specified.
+- [x] Permissions are resolved against current active membership and organization state, not trusted long-lived role claims alone.
+- [x] Sensitive use cases call centralized service policies even when route guards/decorators are present.
+- [x] OWNER/ADMIN/MEMBER/VIEWER permission sets are seeded/documented and least-privilege behavior tested.
+- [x] No undocumented platform admin bypass exists.
 
 ## Verification
 
@@ -41,4 +41,10 @@ Run policy unit tests and authenticated/anonymous/forbidden Fastify E2E cases; l
 
 ## Completion checklist
 
-- [ ] Permission documentation and tests match behavior; progress and staged diff reviewed.
+- [x] Permission documentation and tests match behavior; progress and staged diff reviewed.
+
+## Implementation notes
+
+- Global authorization uses explicit `@Public()` metadata. Permission metadata requires an organization route parameter and is checked against current database membership, organization status, and role grants.
+- Service methods `assertPermission` and `assertAll` are available for use-case-level checks. Tenant resource handlers remain responsible for concealed `404` behavior after tenant-scoped lookup.
+- No platform administrator role or bypass is defined.

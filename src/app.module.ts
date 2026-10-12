@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { randomUUID } from 'node:crypto';
 import { ConfigModule } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
@@ -9,6 +9,7 @@ import { validateEnvironment } from './config/environment.js';
 import { ProblemDetailsFilter } from './common/filters/problem-details.filter.js';
 import { DatabaseModule } from './infrastructure/database/database.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
+import { SessionGuard } from './modules/auth/session.guard.js';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { AuthModule } from './modules/auth/auth.module.js';
   providers: [
     AppService,
     { provide: APP_FILTER, useClass: ProblemDetailsFilter },
+    { provide: APP_GUARD, useExisting: SessionGuard },
   ],
 })
 export class AppModule {}

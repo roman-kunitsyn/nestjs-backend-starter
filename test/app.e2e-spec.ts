@@ -128,6 +128,15 @@ describe('AppController (Fastify E2E)', () => {
     );
   });
 
+  it('requires authentication on routes without explicit public metadata', async () => {
+    const response = await app.getHttpAdapter().getInstance().inject({
+      method: 'GET',
+      url: '/api/v1/users/me',
+    });
+    expect(response.statusCode).toBe(401);
+    expect(response.json()).toMatchObject({ code: 'UNAUTHENTICATED' });
+  });
+
   it('rejects an invalid email verification token with the public problem contract', async () => {
     const response = await app
       .getHttpAdapter()

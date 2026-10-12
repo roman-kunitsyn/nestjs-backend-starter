@@ -6,6 +6,17 @@
 
 Roles are collections of permissions. A request is allowed only when the actor has the required permission in the target organization. Suggested handler metadata includes `@RequirePermissions('members:invite')`, but decorators/guards cannot be the sole enforcement point: application services must independently enforce sensitive policies. Organization role templates are OWNER, ADMIN, MEMBER, VIEWER; they are distinct from platform administration.
 
+The reference seed defines these permission sets:
+
+| Role   | Permissions                                                                                                                                               |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OWNER  | All seeded permissions: organization read/update/delete, member read/invite/remove/role update, resource create/read/update/delete, and audit read.       |
+| ADMIN  | All OWNER permissions except `organization:delete`.                                                                                                       |
+| MEMBER | `resources:create`, `resources:read`, `resources:update`, `resources:delete`. Resource ownership rules are additionally enforced by the resource service. |
+| VIEWER | `organization:read`, `members:read`, `resources:read`, `audit:read`.                                                                                      |
+
+The global access-token guard denies routes unless the handler or controller has explicit `@Public()` metadata. `@RequirePermissions()` is evaluated by that guard using `organizationId` or `orgId` from the route parameters. `PermissionService` independently exposes `assertPermission` and `assertAll` for sensitive application services; both resolve active membership, active organization, and role grants from PostgreSQL on each check. An absent grant produces `403`; callers handling tenant-owned resources must first apply tenant-scoped lookup and use `404` when existence must be concealed. Organization roles do not imply platform privileges.
+
 ## Ownership policies
 
 Evaluate ownership in addition to RBAC. Central, testable policies consider active membership, organization status, required permission, resource organization, creator/owner, and resource state. Example policy: owners/admins with update permission can update any organization resource; members with that permission can update their own; viewers may read but cannot modify. These are policy examples to implement and test, not an implicit bypass.

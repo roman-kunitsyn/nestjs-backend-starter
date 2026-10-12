@@ -4,6 +4,8 @@ import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import postgres from 'postgres';
+import * as schema from '../src/infrastructure/database/schema/index.js';
+import { PermissionService } from '../src/modules/auth/permission.service.js';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -111,6 +113,8 @@ describe('PostgreSQL database infrastructure', () => {
         memberships: 1,
       });
 
+      const permissions = new PermissionService(drizzle({ client, schema }));
+
       const userA = (
         await client`insert into users (email, normalized_email) values ('a@example.test','a@example.test') returning id`
       )[0];
@@ -132,6 +136,36 @@ describe('PostgreSQL database infrastructure', () => {
       )[0];
       if (!memberA)
         throw new Error('Membership fixture insert returned no rows');
+      const memberRole = (
+        await client`select id from roles where key='MEMBER'`
+      )[0];
+      if (!memberRole) throw new Error('Reference MEMBER role is missing');
+      await client`insert into membership_roles (membership_id,role_id) values (${memberA.id},${memberRole.id})`;
+      await expect(
+        permissions.hasPermission(userA.id, orgA.id, 'resources:read'),
+      ).resolves.toBe(true);
+      await expect(
+        permissions.hasPermission(userA.id, orgA.id, 'members:invite'),
+      ).resolves.toBe(false);
+      await expect(
+        permissions.assertPermission(userA.id, orgA.id, 'members:invite'),
+      ).rejects.toMatchObject({
+        status: 403,
+        response: { code: 'FORBIDDEN' },
+      });
+      await expect(
+        permissions.hasPermission(userA.id, orgB.id, 'resources:read'),
+      ).resolves.toBe(false);
+      await client`update organization_memberships set status='suspended' where id=${memberA.id}`;
+      await expect(
+        permissions.hasPermission(userA.id, orgA.id, 'resources:read'),
+      ).resolves.toBe(false);
+      await client`update organization_memberships set status='active' where id=${memberA.id}`;
+      await client`update organizations set status='suspended' where id=${orgA.id}`;
+      await expect(
+        permissions.hasPermission(userA.id, orgA.id, 'resources:read'),
+      ).resolves.toBe(false);
+      await client`update organizations set status='active' where id=${orgA.id}`;
       await expect(
         client`insert into example_resources (organization_id,created_by_membership_id,title) values (${orgB.id},${memberA.id},'cross tenant')`,
       ).rejects.toMatchObject({ code: '23503' });

@@ -7,6 +7,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { AppService } from './app.service.js';
+import { Public } from './modules/auth/access-control.js';
 
 @Controller()
 @ApiTags('starter')
@@ -14,6 +15,7 @@ export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get()
+  @Public()
   @ApiOperation({
     operationId: 'getStarterMessage',
     summary: 'Get the starter message',

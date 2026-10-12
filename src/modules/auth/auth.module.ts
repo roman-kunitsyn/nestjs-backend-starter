@@ -10,6 +10,7 @@ import { JwtService } from './jwt.service.js';
 import { SessionGuard } from './session.guard.js';
 import { SessionService } from './session.service.js';
 import { PasswordHasher } from './password-hasher.js';
+import { PermissionService } from './permission.service.js';
 
 @Module({
   imports: [DatabaseModule],
@@ -20,6 +21,7 @@ import { PasswordHasher } from './password-hasher.js';
     JwtService,
     SessionService,
     SessionGuard,
+    PermissionService,
     {
       provide: EMAIL_SENDER,
       inject: [ConfigService],
@@ -32,6 +34,13 @@ import { PasswordHasher } from './password-hasher.js';
       },
     },
   ],
-  exports: [AuthService, PasswordHasher, SessionService, JwtService],
+  exports: [
+    AuthService,
+    PasswordHasher,
+    SessionService,
+    JwtService,
+    SessionGuard,
+    PermissionService,
+  ],
 })
 export class AuthModule {}

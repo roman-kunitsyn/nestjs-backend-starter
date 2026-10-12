@@ -1,11 +1,9 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { FastifyRequest } from 'fastify';
 import { AuthService } from './auth.service.js';
-import { SessionGuard } from './session.guard.js';
 @ApiTags('Users')
 @Controller('users')
-@UseGuards(SessionGuard)
 @ApiBearerAuth()
 export class UsersController {
   constructor(private readonly auth: AuthService) {}
