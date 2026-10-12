@@ -2,9 +2,9 @@
 
 > Generated from `progress.json` by `pnpm progress:dashboard`. Do not edit by hand.
 
-**Project status:** blocked
+**Project status:** in_progress
 **Current stage:** Stage 04 — Identity and Sessions
-**Next milestone:** M010 — User Credentials and Account Lifecycle (blocked)
+**Next milestone:** M011 — JWT Sessions and Refresh Rotation (pending)
 
 ## Stage 00 — Preparation
 

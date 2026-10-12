@@ -140,52 +140,64 @@ export class AuthService {
 
   async resendVerification(email: string): Promise<{ accepted: true }> {
     const normalizedEmail = normalizeEmail(email);
-    const [user] = await this.db
-      .select()
-      .from(users)
-      .where(eq(users.normalizedEmail, normalizedEmail))
-      .limit(1);
-    if (user?.status === 'active' && !user.emailVerifiedAt) {
-      if (await this.canIssue(emailVerificationTokens, user.id)) {
-        const token = randomBytes(32).toString('base64url');
-        await this.db.insert(emailVerificationTokens).values({
-          userId: user.id,
-          tokenDigest: digest(token),
-          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        });
-        await this.email.send({
-          to: user.email,
-          subject: 'Verify your email',
-          text: `Verify your email with this token: ${token}`,
-        });
-      }
-    }
+    const issuance = await this.db.transaction(async (tx) => {
+      const [user] = await tx
+        .select()
+        .from(users)
+        .where(eq(users.normalizedEmail, normalizedEmail))
+        .limit(1)
+        .for('update');
+      if (
+        user?.status !== 'active' ||
+        user.emailVerifiedAt ||
+        !(await this.canIssue(tx, emailVerificationTokens, user.id))
+      )
+        return undefined;
+      const token = randomBytes(32).toString('base64url');
+      await tx.insert(emailVerificationTokens).values({
+        userId: user.id,
+        tokenDigest: digest(token),
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      });
+      return { email: user.email, token };
+    });
+    if (issuance)
+      await this.email.send({
+        to: issuance.email,
+        subject: 'Verify your email',
+        text: `Verify your email with this token: ${issuance.token}`,
+      });
     return { accepted: true };
   }
 
   async forgotPassword(email: string): Promise<{ accepted: true }> {
-    const [user] = await this.db
-      .select()
-      .from(users)
-      .where(eq(users.normalizedEmail, normalizeEmail(email)))
-      .limit(1);
-    if (
-      user?.status === 'active' &&
-      user.passwordHash &&
-      (await this.canIssue(passwordResetTokens, user.id))
-    ) {
+    const issuance = await this.db.transaction(async (tx) => {
+      const [user] = await tx
+        .select()
+        .from(users)
+        .where(eq(users.normalizedEmail, normalizeEmail(email)))
+        .limit(1)
+        .for('update');
+      if (
+        user?.status !== 'active' ||
+        !user.passwordHash ||
+        !(await this.canIssue(tx, passwordResetTokens, user.id))
+      )
+        return undefined;
       const token = randomBytes(32).toString('base64url');
-      await this.db.insert(passwordResetTokens).values({
+      await tx.insert(passwordResetTokens).values({
         userId: user.id,
         tokenDigest: digest(token),
         expiresAt: new Date(Date.now() + 30 * 60 * 1000),
       });
+      return { email: user.email, token };
+    });
+    if (issuance)
       await this.email.send({
-        to: user.email,
+        to: issuance.email,
         subject: 'Reset your password',
-        text: `Reset your password with this token: ${token}`,
+        text: `Reset your password with this token: ${issuance.token}`,
       });
-    }
     return { accepted: true };
   }
 
@@ -289,12 +301,18 @@ export class AuthService {
         message: 'Current password is incorrect',
       });
     const passwordHash = await this.passwords.hash(nextPassword);
-    await this.db
+    const [updated] = await this.db
       .update(users)
       .set({ passwordHash, updatedAt: new Date() })
       .where(
         and(eq(users.id, user.id), eq(users.passwordHash, user.passwordHash)),
-      );
+      )
+      .returning({ id: users.id });
+    if (!updated)
+      throw new UnauthorizedException({
+        code: 'INVALID_CREDENTIALS',
+        message: 'Current password is incorrect',
+      });
     return { changed: true };
   }
 
@@ -313,11 +331,12 @@ export class AuthService {
   }
 
   private async canIssue(
+    db: Pick<Database, 'select'>,
     table: typeof emailVerificationTokens | typeof passwordResetTokens,
     userId: string,
   ): Promise<boolean> {
     const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    const rows = await this.db
+    const rows = await db
       .select({ id: table.id })
       .from(table)
       .where(and(eq(table.userId, userId), gt(table.createdAt, hourAgo)))
@@ -327,10 +346,20 @@ export class AuthService {
 }
 
 function isUniqueViolation(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    (error as { code?: unknown }).code === '23505'
-  );
+  const seen = new Set<object>();
+  let candidate: unknown = error;
+  while (typeof candidate === 'object' && candidate !== null) {
+    if (seen.has(candidate)) return false;
+    seen.add(candidate);
+    if (
+      'code' in candidate &&
+      (candidate as { code?: unknown }).code === '23505'
+    )
+      return true;
+    candidate =
+      'cause' in candidate
+        ? (candidate as { cause?: unknown }).cause
+        : undefined;
+  }
+  return false;
 }

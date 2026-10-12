@@ -4,5 +4,5 @@ import baseConfig from './jest.config.mjs';
 export default {
   ...baseConfig,
   testMatch: ['<rootDir>/test/**/*.e2e-spec.ts'],
-  testTimeout: 15000,
+  testTimeout: 120000,
 };

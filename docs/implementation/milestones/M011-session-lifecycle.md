@@ -12,6 +12,7 @@ Complete JWT access validation and server-backed device sessions with atomic opa
 
 - Asymmetric JWT signing/validation, issuer/audience/subject/session/token claims, pinned algorithm and `kid` rotation.
 - Login password verification and creation of authenticated server-side sessions/access credentials.
+- Authenticated `/auth/me`, `/users/me`, and password-change HTTP routes using the session-bound JWT guard; `/auth/me` identity and `/users/me` profile remain distinct.
 - Secure refresh cookie, refresh idle/maximum lifetime, atomic session rotation/history, bounded concurrency handling and replay response.
 - Logout, logout-all, session enumeration/revocation, revoked session enforcement and cookie clearing.
 - Persist the refresh-token replay security event using the prepared audit schema; M015 centralizes the reusable audit service.
@@ -33,6 +34,7 @@ Complete JWT access validation and server-backed device sessions with atomic opa
 
 - [ ] JWT uses supported asymmetric signing and validates pinned algorithm, signature, issuer, audience, expiry, claim types, user status and configured session revocation policy.
 - [ ] Login verifies credentials safely, rejects disabled/suspended accounts without account enumeration, and issues a session-bound short-lived JWT.
+- [ ] Authenticated `/auth/me`, `/users/me`, and password-change routes require a valid session-bound JWT; sensitive password changes require current-password confirmation.
 - [ ] Refresh tokens are opaque and high-entropy, stored only as digest, rotated in an atomic transaction, and never placed in localStorage.
 - [ ] Concurrent refresh is safe with narrowly bounded retry policy; consumed-token replay revokes session/family and records a security event.
 - [ ] Current logout, logout-all, list/revoke session, expiry, and cookie clearing behave correctly.
