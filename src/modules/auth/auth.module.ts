@@ -41,6 +41,7 @@ import { PermissionService } from './permission.service.js';
     JwtService,
     SessionGuard,
     PermissionService,
+    EMAIL_SENDER,
   ],
 })
 export class AuthModule {}

@@ -244,6 +244,16 @@ export class OrganizationService {
     });
   }
 
+  async requirePermission(
+    userId: string,
+    organizationId: string,
+    permission: string,
+  ) {
+    const organization = await this.requireMember(userId, organizationId);
+    if (organization.status !== 'active') throw notFound();
+    await this.permissions.assertPermission(userId, organizationId, permission);
+  }
+
   private async requireMember(userId: string, organizationId: string) {
     const [row] = await this.db
       .select({ organization: organizations })

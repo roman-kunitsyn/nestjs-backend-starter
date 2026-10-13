@@ -686,6 +686,269 @@ paths:
       security: *a2
       summary: Reactivate a suspended organization
       tags: *a3
+  /api/v1/organizations/{organizationId}/members:
+    get:
+      operationId: listOrganizationMembers
+      parameters:
+        - name: organizationId
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Members visible to an authorized organization member.
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security: &a4
+        - bearer: []
+      summary: List organization members
+      tags: &a5
+        - Organization memberships and invitations
+  /api/v1/organizations/{organizationId}/members/{membershipId}:
+    patch:
+      operationId: updateOrganizationMemberRole
+      parameters:
+        - name: organizationId
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+        - name: membershipId
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - role
+              properties:
+                role:
+                  type: string
+                  enum:
+                    - ADMIN
+                    - MEMBER
+                    - VIEWER
+              additionalProperties: false
+      responses:
+        "200":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security: *a4
+      summary: Change a member role
+      tags: *a5
+    delete:
+      operationId: removeOrganizationMember
+      parameters:
+        - name: organizationId
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+        - name: membershipId
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security: *a4
+      summary: Remove a member
+      tags: *a5
+  /api/v1/organizations/{organizationId}/leave:
+    post:
+      operationId: leaveOrganization
+      parameters:
+        - name: organizationId
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security: *a4
+      summary: Leave an organization
+      tags: *a5
+  /api/v1/organizations/{organizationId}/ownership-transfer:
+    post:
+      operationId: transferOrganizationOwnership
+      parameters:
+        - name: organizationId
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - membershipId
+              properties:
+                membershipId:
+                  type: string
+                  format: uuid
+              additionalProperties: false
+      responses:
+        "200":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security: *a4
+      summary: Transfer organization ownership
+      tags: *a5
+  /api/v1/organizations/{organizationId}/invitations:
+    post:
+      operationId: createOrganizationInvitation
+      parameters:
+        - name: organizationId
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - role
+              properties:
+                email:
+                  type: string
+                  format: email
+                role:
+                  type: string
+                  enum:
+                    - ADMIN
+                    - MEMBER
+                    - VIEWER
+              additionalProperties: false
+      responses:
+        "201":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security: *a4
+      summary: Invite a person by email
+      tags: *a5
+    get:
+      operationId: listOrganizationInvitations
+      parameters:
+        - name: organizationId
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security: *a4
+      summary: List organization invitations
+      tags: *a5
+  /api/v1/organizations/{organizationId}/invitations/{invitationId}:
+    delete:
+      operationId: revokeOrganizationInvitation
+      parameters:
+        - name: organizationId
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+        - name: invitationId
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security: *a4
+      summary: Revoke an invitation
+      tags: *a5
+  /api/v1/invitations/accept:
+    post:
+      operationId: acceptOrganizationInvitation
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  minLength: 32
+              additionalProperties: false
+      responses:
+        "200":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security: *a4
+      summary: Accept an invitation for the authenticated account
+      tags: *a5
 info:
   title: NestJS Backend Starter API
   description: REST API contract for the NestJS backend starter.

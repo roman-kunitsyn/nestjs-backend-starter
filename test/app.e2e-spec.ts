@@ -16,6 +16,10 @@ import {
   configureRequestCorrelation,
 } from '../src/common/http/request-id.js';
 import { createOpenApiDocument, setupOpenApi } from '../src/common/openapi.js';
+import {
+  EMAIL_SENDER,
+  type EmailSender,
+} from '../src/modules/email/email-sender.js';
 
 describe('AppController (Fastify E2E)', () => {
   let app: NestFastifyApplication;
@@ -306,6 +310,122 @@ describe('AppController (Fastify E2E)', () => {
       membership: { role: 'OWNER', status: 'active' },
     });
     const organizationId = created.json().id as string;
+    const inviteResponse = await server.inject({
+      method: 'POST',
+      url: `/api/v1/organizations/${organizationId}/invitations`,
+      headers: { authorization: ownerToken },
+      payload: { email: 'invited.person@example.test', role: 'VIEWER' },
+    });
+    expect(inviteResponse.statusCode).toBe(201);
+    expect(inviteResponse.json()).toMatchObject({
+      email: 'invited.person@example.test',
+      role: 'VIEWER',
+      status: 'pending',
+    });
+    expect(inviteResponse.json()).not.toHaveProperty('token');
+    const invitations = await server.inject({
+      method: 'GET',
+      url: `/api/v1/organizations/${organizationId}/invitations`,
+      headers: { authorization: ownerToken },
+    });
+    expect(invitations.statusCode).toBe(200);
+    expect(invitations.json()).toHaveLength(1);
+    const inviteId = inviteResponse.json().id as string;
+    const revoked = await server.inject({
+      method: 'DELETE',
+      url: `/api/v1/organizations/${organizationId}/invitations/${inviteId}`,
+      headers: { authorization: ownerToken },
+    });
+    expect(revoked.statusCode).toBe(204);
+
+    const sentInvitations: Array<{ to: string; text: string }> = [];
+    const sender = app.get<EmailSender>(EMAIL_SENDER);
+    const originalSend = sender.send.bind(sender);
+    sender.send = async (message) => {
+      sentInvitations.push(message);
+    };
+    const existingInviteeToken = await credentials(
+      'existing.invitee@example.test',
+    );
+    const existingInvitee = await databaseClient`
+      select id from users where normalized_email = 'existing.invitee@example.test'
+    `;
+    await databaseClient`
+      update users set email_verified_at = now() where id = ${existingInvitee[0]?.id}
+    `;
+    const existingUserInvite = await server.inject({
+      method: 'POST',
+      url: `/api/v1/organizations/${organizationId}/invitations`,
+      headers: { authorization: ownerToken },
+      payload: { email: 'existing.invitee@example.test', role: 'VIEWER' },
+    });
+    expect(existingUserInvite.statusCode).toBe(201);
+    const existingInviteToken = sentInvitations
+      .at(-1)
+      ?.text.match(/Invitation token: (\S+)/)?.[1];
+    const existingAcceptance = await server.inject({
+      method: 'POST',
+      url: '/api/v1/invitations/accept',
+      headers: { authorization: existingInviteeToken },
+      payload: { token: existingInviteToken },
+    });
+    expect(existingAcceptance.statusCode).toBe(200);
+
+    const newInvite = await server.inject({
+      method: 'POST',
+      url: `/api/v1/organizations/${organizationId}/invitations`,
+      headers: { authorization: ownerToken },
+      payload: { email: 'new.invitee@example.test', role: 'VIEWER' },
+    });
+    expect(newInvite.statusCode).toBe(201);
+    const inviteToken = sentInvitations
+      .at(-1)
+      ?.text.match(/Invitation token: (\S+)/)?.[1];
+    expect(inviteToken).toBeDefined();
+    const inviteeToken = await credentials('new.invitee@example.test');
+    const invitee = await databaseClient`
+      select id from users where normalized_email = 'new.invitee@example.test'
+    `;
+    await databaseClient`
+      update users set email_verified_at = now() where id = ${invitee[0]?.id}
+    `;
+    const accepted = await server.inject({
+      method: 'POST',
+      url: '/api/v1/invitations/accept',
+      headers: { authorization: inviteeToken },
+      payload: { token: inviteToken },
+    });
+    expect(accepted.statusCode).toBe(200);
+    expect(accepted.json()).toMatchObject({ organizationId, role: 'VIEWER' });
+    const invitedMembership = await databaseClient`
+      select m.id from organization_memberships m
+      inner join users u on u.id = m.user_id
+      where m.organization_id = ${organizationId}
+        and u.normalized_email = 'new.invitee@example.test'
+    `;
+    const roleUpdated = await server.inject({
+      method: 'PATCH',
+      url: `/api/v1/organizations/${organizationId}/members/${invitedMembership[0]?.id}`,
+      headers: { authorization: ownerToken },
+      payload: { role: 'MEMBER' },
+    });
+    expect(roleUpdated.statusCode).toBe(200);
+    expect(roleUpdated.json()).toMatchObject({ role: 'MEMBER' });
+    const removedMember = await server.inject({
+      method: 'DELETE',
+      url: `/api/v1/organizations/${organizationId}/members/${invitedMembership[0]?.id}`,
+      headers: { authorization: ownerToken },
+    });
+    expect(removedMember.statusCode).toBe(204);
+    const reused = await server.inject({
+      method: 'POST',
+      url: '/api/v1/invitations/accept',
+      headers: { authorization: inviteeToken },
+      payload: { token: inviteToken },
+    });
+    expect(reused.statusCode).toBe(404);
+    sender.send = originalSend;
+
     const ownerRows = await databaseClient`
       select m.id from organization_memberships m
       inner join membership_roles mr on mr.membership_id = m.id
@@ -313,6 +433,13 @@ describe('AppController (Fastify E2E)', () => {
       where m.organization_id = ${organizationId} and m.status = 'active' and r.key = 'OWNER'
     `;
     expect(ownerRows).toHaveLength(1);
+
+    const ownerLeave = await server.inject({
+      method: 'POST',
+      url: `/api/v1/organizations/${organizationId}/leave`,
+      headers: { authorization: ownerToken },
+    });
+    expect(ownerLeave.statusCode).toBe(409);
 
     const listed = await server.inject({
       method: 'GET',
@@ -391,17 +518,31 @@ describe('AppController (Fastify E2E)', () => {
       slug: 'acme-team',
     });
 
+    const eligibleOwner = await databaseClient`
+      select m.id from organization_memberships m
+      inner join users u on u.id = m.user_id
+      where m.organization_id = ${organizationId}
+        and u.normalized_email = 'organization.other@example.test'
+    `;
+    const transferred = await server.inject({
+      method: 'POST',
+      url: `/api/v1/organizations/${organizationId}/ownership-transfer`,
+      headers: { authorization: ownerToken },
+      payload: { membershipId: eligibleOwner[0]?.id },
+    });
+    expect(transferred.statusCode).toBe(200);
+
     const suspended = await server.inject({
       method: 'POST',
       url: `/api/v1/organizations/${organizationId}/suspend`,
-      headers: { authorization: ownerToken },
+      headers: { authorization: otherToken },
     });
     expect(suspended.statusCode).toBe(200);
     expect(suspended.json().status).toBe('suspended');
     const activated = await server.inject({
       method: 'POST',
       url: `/api/v1/organizations/${organizationId}/activate`,
-      headers: { authorization: ownerToken },
+      headers: { authorization: otherToken },
     });
     expect(activated.statusCode).toBe(200);
     expect(activated.json().status).toBe('active');
@@ -409,10 +550,51 @@ describe('AppController (Fastify E2E)', () => {
     const archived = await server.inject({
       method: 'POST',
       url: `/api/v1/organizations/${organizationId}/archive`,
-      headers: { authorization: ownerToken },
+      headers: { authorization: otherToken },
     });
     expect(archived.statusCode).toBe(200);
     expect(archived.json().status).toBe('archived');
+
+    const raceOrganization = await server.inject({
+      method: 'POST',
+      url: '/api/v1/organizations',
+      headers: { authorization: ownerToken },
+      payload: { name: 'Race Safety', slug: 'race-safety' },
+    });
+    const raceOrgId = raceOrganization.json().id as string;
+    const raceMember = await databaseClient`
+      insert into organization_memberships (organization_id, user_id)
+      values (${raceOrgId}, ${otherUser[0]?.id}) returning id
+    `;
+    await databaseClient`
+      insert into membership_roles (membership_id, role_id)
+      values (${raceMember[0]?.id}, ${memberRole[0]?.id})
+    `;
+    const [removeRace, transferRace] = await Promise.all([
+      server.inject({
+        method: 'DELETE',
+        url: `/api/v1/organizations/${raceOrgId}/members/${raceMember[0]?.id}`,
+        headers: { authorization: ownerToken },
+      }),
+      server.inject({
+        method: 'POST',
+        url: `/api/v1/organizations/${raceOrgId}/ownership-transfer`,
+        headers: { authorization: ownerToken },
+        payload: { membershipId: raceMember[0]?.id },
+      }),
+    ]);
+    expect(
+      [removeRace.statusCode, transferRace.statusCode].filter(
+        (status) => status === 204 || status === 200,
+      ),
+    ).toHaveLength(1);
+    const raceOwners = await databaseClient`
+      select count(*)::int as count from organization_memberships m
+      inner join membership_roles mr on mr.membership_id = m.id
+      inner join roles r on r.id = mr.role_id
+      where m.organization_id = ${raceOrgId} and m.status = 'active' and r.key = 'OWNER'
+    `;
+    expect(raceOwners[0]?.count).toBe(1);
   });
 
   afterAll(async () => {

@@ -3,8 +3,8 @@
 > Generated from `progress.json` by `pnpm progress:dashboard`. Do not edit by hand.
 
 **Project status:** in_progress
-**Current stage:** Stage 05 — Organizations and Authorization
-**Next milestone:** M014 — Memberships and Invitations (pending)
+**Current stage:** Stage 06 — Email and Audit
+**Next milestone:** M015 — Email Delivery and Audit Outbox (pending)
 
 ## Stage 00 — Preparation
 
@@ -24,7 +24,7 @@
 | 02 | HTTP and API Foundation | M006–M007 | completed |
 | 03 | Database Infrastructure | M008–M009 | completed |
 | 04 | Identity and Sessions | M010–M011 | completed |
-| 05 | Organizations and Authorization | M012–M014 | in_progress |
+| 05 | Organizations and Authorization | M012–M014 | completed |
 | 06 | Email and Audit | M015 | pending |
 | 07 | Example Resource | M016 | pending |
 | 08 | Security and Observability | M017–M018 | pending |

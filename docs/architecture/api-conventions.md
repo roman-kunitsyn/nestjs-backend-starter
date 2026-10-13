@@ -10,6 +10,8 @@ The source endpoint inventory includes registration/login/refresh/logout/logout-
 
 Organization lifecycle contracts are defined in [Multi-tenancy](multi-tenancy.md): create/list/detail/update plus explicit suspend/archive/activate actions. Create returns `201` with the organization and initial OWNER membership; reads, updates, and lifecycle actions return `200`. Cross-organization IDs are concealed with `404`.
 
+M014 adds `/organizations/{organizationId}/members` list, role update and removal; `/organizations/{organizationId}/leave`; `/organizations/{organizationId}/ownership-transfer`; invitation create/list/revoke under `/organizations/{organizationId}/invitations`; and authenticated `POST /invitations/accept`. Membership and invitation administration uses `members:read`, `members:invite`, `members:remove`, and `members:roles:update`. Only owners may grant ADMIN, and OWNER can only change through ownership transfer. Invitations last seven days, store SHA-256 digests of random opaque tokens, and require a signed-in account with a verified matching normalized email. Create returns only invitation metadata; the token is delivered through the configured email adapter.
+
 ## Pagination, filtering, and idempotency
 
 Use cursor pagination for large tenant datasets. Query parameters: `limit`, `cursor`, `sort`, `order`. Default limit 20, maximum 100. Return `{items, pageInfo:{hasNextPage,nextCursor}}`. Cursors are opaque, validated, bound to query context and tenant; stable order includes a unique tie-breaker such as `(created_at,id)`. Offset may be separate for simple admin tables.
