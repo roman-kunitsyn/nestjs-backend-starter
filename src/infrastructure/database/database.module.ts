@@ -31,6 +31,9 @@ import { DatabaseLifecycle } from './database.lifecycle.js';
             // Safe with transaction-pooling proxies.
             prepare: false,
             onnotice: () => undefined,
+            connection: {
+              application_name: `${config.getOrThrow('APP_NAME', { infer: true })}:${process.env.HOSTNAME ?? process.pid}`,
+            },
           },
         );
         return {
@@ -52,6 +55,6 @@ import { DatabaseLifecycle } from './database.lifecycle.js';
     },
     DatabaseLifecycle,
   ],
-  exports: [DATABASE],
+  exports: [DATABASE, DATABASE_CLIENT],
 })
 export class DatabaseModule {}

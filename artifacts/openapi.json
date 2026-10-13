@@ -68,6 +68,94 @@
         ]
       }
     },
+    "/health/live": {
+      "get": {
+        "operationId": "live",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {
+              "X-Request-ID": {
+                "description": "Request correlation identifier.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/health/startup": {
+      "get": {
+        "operationId": "startup",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {
+              "X-Request-ID": {
+                "description": "Request correlation identifier.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "ready",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {
+              "X-Request-ID": {
+                "description": "Request correlation identifier.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/health/metrics": {
+      "get": {
+        "operationId": "metricsText",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {
+              "X-Request-ID": {
+                "description": "Request correlation identifier.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Health"
+        ]
+      }
+    },
     "/api/v1/auth/register": {
       "post": {
         "operationId": "registerUser",

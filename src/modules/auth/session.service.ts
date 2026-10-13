@@ -1,4 +1,9 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Optional,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { and, desc, eq, gt, isNull } from 'drizzle-orm';
 import { createHash, createHmac, randomBytes, randomUUID } from 'node:crypto';
@@ -19,6 +24,7 @@ import {
   AuditEventService,
   EmailOutboxService,
 } from '../email/email-outbox.service.js';
+import { MetricsService } from '../observability/metrics.js';
 
 const digest = (value: string) =>
   createHash('sha256').update(value).digest('hex');
@@ -40,6 +46,7 @@ export class SessionService {
     private readonly config: ConfigService<EnvironmentConfig>,
     private readonly outbox: EmailOutboxService,
     private readonly audit: AuditEventService,
+    @Optional() private readonly metrics: MetricsService = new MetricsService(),
   ) {
     const configuredKey = config.getOrThrow('AUTH_REFRESH_TOKEN_KEY', {
       infer: true,
@@ -201,6 +208,8 @@ export class SessionService {
         refreshToken,
       };
     });
+    if (result.outcome === 'replay')
+      this.metrics.increment('refresh_token_reuse_total');
     if (result.outcome === 'invalid' || result.outcome === 'replay')
       throw unavailable();
     if (!result.userId) throw unavailable();

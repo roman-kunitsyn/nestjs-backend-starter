@@ -4,6 +4,7 @@ import {
   Logger,
   OnModuleDestroy,
   OnModuleInit,
+  Optional,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { and, asc, eq, gte, lte, or } from 'drizzle-orm';
@@ -21,6 +22,8 @@ import {
 } from './email-templates.js';
 import { EMAIL_SENDER, type EmailSender } from './email-sender.js';
 import type { EnvironmentConfig } from '../../config/environment.js';
+import { MetricsService } from '../observability/metrics.js';
+import { trace, SpanStatusCode } from '@opentelemetry/api';
 
 type Transaction = Parameters<Parameters<Database['transaction']>[0]>[0];
 const MAX_ATTEMPTS = 8;
@@ -54,6 +57,7 @@ export class EmailOutboxService {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     @Inject(EMAIL_SENDER) private readonly sender: EmailSender,
+    @Optional() private readonly metrics: MetricsService = new MetricsService(),
   ) {}
 
   async enqueue(
@@ -131,12 +135,24 @@ export class EmailOutboxService {
     const deliver = async (row: (typeof claimed)[number]) => {
       try {
         const input = row.payload as TemplateInput;
-        await this.sender.send(
-          renderEmail(row.template as EmailTemplate, {
-            ...input,
-            recipient: row.recipient,
-          }),
-        );
+        await trace
+          .getTracer('nestjs-backend-starter')
+          .startActiveSpan('email.send', async (span) => {
+            try {
+              span.setAttribute('email.template', row.template);
+              await this.sender.send(
+                renderEmail(row.template as EmailTemplate, {
+                  ...input,
+                  recipient: row.recipient,
+                }),
+              );
+            } catch (error) {
+              span.setStatus({ code: SpanStatusCode.ERROR });
+              throw error;
+            } finally {
+              span.end();
+            }
+          });
         await this.db
           .update(emailOutbox)
           .set({
@@ -148,6 +164,7 @@ export class EmailOutboxService {
           .where(eq(emailOutbox.id, row.id));
         sent += 1;
       } catch (error) {
+        this.metrics.increment('email_delivery_failures_total');
         const attemptCount = row.attemptCount + 1;
         const terminal = attemptCount >= MAX_ATTEMPTS;
         const delayMs = Math.min(

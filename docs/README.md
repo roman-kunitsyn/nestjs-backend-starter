@@ -16,6 +16,8 @@ Account endpoint behavior and current lifecycle limitations are documented in [a
 
 The current scaffold setup is in [Local development](operations/local-development.md).
 
+Health probes, metrics, and optional tracing are described in [Observability operations](operations/observability.md).
+
 ## Conventions
 
 - Keep source references intact and link to them from derived documents.

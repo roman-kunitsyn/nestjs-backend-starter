@@ -1,8 +1,8 @@
 {
   "project": {
     "status": "in_progress",
-    "current_stage": "Stage 08 — Security and Observability",
-    "next_milestone": "M018"
+    "current_stage": "Stage 09 — Production Deployment",
+    "next_milestone": "M019"
   },
   "stages": [
     {
@@ -81,7 +81,7 @@
     {
       "id": "stage-08",
       "title": "Security and Observability",
-      "status": "in_progress",
+      "status": "completed",
       "milestones": [
         "M017",
         "M018"
@@ -460,11 +460,21 @@
       "id": "M018",
       "title": "Health and Observability",
       "stage": "stage-08",
-      "status": "pending",
+      "status": "completed",
       "dependencies": [
         "M017"
       ],
-      "contract": "milestones/M018-observability.md"
+      "contract": "milestones/M018-observability.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Liveness stayed available during simulated PostgreSQL failure; readiness failed safely and became unhealthy before shutdown; startup and probe routes passed Fastify E2E",
+          "Prometheus HTTP histogram, request totals, database active/idle and pool maximum, authentication failure, refresh reuse, email failure, and label redaction covered by tests",
+          "OpenTelemetry disabled by default; enabled OTLP SDK initialization and shutdown smoke passed; HTTP and email trace behavior configured; postgres.js query spans documented as unsupported by current instrumentation",
+          "Lint, Prettier check, strict typecheck, build, 38 unit tests, 22 Fastify E2E tests, 10 PostgreSQL integration tests, Drizzle check and OpenAPI artifact check passed",
+          "Progress validator and 11 tracking regression tests passed; multi-instance Kubernetes smoke deferred to M020 because no Kubernetes environment is configured"
+        ]
+      }
     },
     {
       "id": "M019",

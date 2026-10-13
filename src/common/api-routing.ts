@@ -10,6 +10,8 @@ export function configureApiRouting(app: INestApplication): void {
       { path: 'health', method: RequestMethod.ALL },
       { path: 'health/live', method: RequestMethod.ALL },
       { path: 'health/ready', method: RequestMethod.ALL },
+      { path: 'health/startup', method: RequestMethod.ALL },
+      { path: 'health/metrics', method: RequestMethod.ALL },
     ],
   });
 }

@@ -1,3 +1,4 @@
+import './modules/observability/instrumentation.js';
 import { NestFactory } from '@nestjs/core';
 import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { ConfigService } from '@nestjs/config';
@@ -16,6 +17,10 @@ import {
 } from './common/api-routing.js';
 import { configureHttpSecurity } from './common/http/security.js';
 import { parseTrustedProxyList } from './config/environment.js';
+import {
+  configureHttpMetrics,
+  MetricsService,
+} from './modules/observability/metrics.js';
 
 const app = await NestFactory.create<NestFastifyApplication>(
   AppModule,
@@ -29,6 +34,9 @@ const config = app.get(ConfigService<EnvironmentConfig>);
 
 configureApiRouting(app);
 configureRequestCorrelation(app);
+const metrics = app.get(MetricsService);
+const fastify = app.getHttpAdapter().getInstance();
+configureHttpMetrics(fastify, metrics);
 app.useLogger(app.get(PinoLogger));
 await configureHttpSecurity(app, config);
 const openApi = createOpenApiDocument(app);

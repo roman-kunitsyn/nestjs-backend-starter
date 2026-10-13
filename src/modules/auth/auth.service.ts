@@ -2,6 +2,7 @@ import {
   ConflictException,
   Inject,
   Injectable,
+  Optional,
   UnauthorizedException,
 } from '@nestjs/common';
 import { and, eq, gt, isNull } from 'drizzle-orm';
@@ -22,6 +23,7 @@ import {
 } from '../email/email-outbox.service.js';
 import { PasswordHasher } from './password-hasher.js';
 import type { RegisterInput } from './auth.schemas.js';
+import { MetricsService } from '../observability/metrics.js';
 
 const digest = (token: string): string =>
   createHash('sha256').update(token).digest('hex');
@@ -45,6 +47,7 @@ export class AuthService {
     private readonly passwords: PasswordHasher,
     private readonly outbox: EmailOutboxService,
     private readonly audit: AuditEventService,
+    @Optional() private readonly metrics: MetricsService = new MetricsService(),
   ) {}
 
   async register(input: RegisterInput) {
@@ -280,11 +283,13 @@ export class AuthService {
       .limit(1);
     const hash = user?.passwordHash ?? DUMMY_PASSWORD_HASH;
     const valid = await this.passwords.verify(hash, password);
-    if (!user || !valid || user.status !== 'active')
+    if (!user || !valid || user.status !== 'active') {
+      this.metrics.increment('authentication_failures_total');
       throw new UnauthorizedException({
         code: 'INVALID_CREDENTIALS',
         message: 'Invalid email or password',
       });
+    }
     if (user.passwordHash && this.passwords.needsRehash(hash)) {
       const passwordHash = await this.passwords.hash(password);
       await this.db

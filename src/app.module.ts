@@ -12,10 +12,12 @@ import { AuthModule } from './modules/auth/auth.module.js';
 import { SessionGuard } from './modules/auth/session.guard.js';
 import { OrganizationsModule } from './modules/organizations/organizations.module.js';
 import { ResourcesModule } from './modules/resources/resources.module.js';
+import { ObservabilityModule } from './modules/observability/observability.module.js';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnvironment }),
+    ObservabilityModule,
     DatabaseModule,
     AuthModule,
     OrganizationsModule,

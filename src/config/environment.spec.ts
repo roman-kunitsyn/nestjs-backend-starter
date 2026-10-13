@@ -6,6 +6,7 @@ describe('environment configuration', () => {
       NODE_ENV: 'development',
       APP_NAME: 'nestjs-backend-starter',
       APP_HOST: '127.0.0.1',
+      OTEL_ENABLED: false,
       HTTP_CORS_ORIGINS: '',
       HTTP_TRUSTED_PROXY_CIDRS: '',
       HTTP_RATE_LIMIT_MAX: 120,
@@ -103,6 +104,19 @@ describe('environment configuration', () => {
       PORT: 4317,
       APP_HOST: '0.0.0.0',
     });
+  });
+
+  it('keeps OpenTelemetry disabled by default and validates an OTLP endpoint', () => {
+    expect(
+      validateEnvironment({
+        OTEL_ENABLED: 'true',
+        OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:
+          'https://otel.example.test/v1/traces',
+      }),
+    ).toMatchObject({ OTEL_ENABLED: true });
+    expect(() =>
+      validateEnvironment({ OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: 'not-a-url' }),
+    ).toThrow('OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:');
   });
 
   it('parses explicit browser origins and proxy ranges without accepting wildcard CORS', () => {

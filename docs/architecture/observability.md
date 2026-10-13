@@ -20,6 +20,10 @@ Support optional OpenTelemetry through configuration; instrument incoming HTTP, 
 
 Provide public-within-intended-exposure `/health/live`, `/health/ready`, `/health/startup`. Liveness reports process viability and must not fail solely because PostgreSQL is temporarily unavailable. Readiness checks DB with a short timeout and turns false before shutdown drains traffic. Startup indicates initialization completion. Configure Kubernetes probes accordingly; avoid exposing sensitive diagnostics.
 
+The application exposes Prometheus text metrics at `/health/metrics`. HTTP method and route-template labels and status classes are bounded; user, organization, token, and email values are never metric labels. Database connection gauges are read from `pg_stat_activity` using the configured application name plus the pod hostname or local process ID, alongside the configured per-instance pool maximum. Authentication failures, refresh-token reuse, and email delivery failures are process counters and therefore reset on restart.
+
+Optional OpenTelemetry tracing is disabled by default. Set `OTEL_ENABLED=true` and `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` to enable OTLP/HTTP export. Supported Node.js integrations propagate W3C trace context across inbound and outbound HTTP and instrument HTTP/NestJS where supported. Request spans receive the trusted request ID. Email delivery adds a template-only span. postgres.js is not auto-instrumented by the selected OpenTelemetry integration set; database query spans are not currently emitted. Tracing shuts down with the application.
+
 ## Audit
 
 Audit records cover sensitive and administrative actions; they carry request correlation and safe actor/resource metadata, never credentials. Persist atomically with critical state transitions where required. See [Database](database.md).

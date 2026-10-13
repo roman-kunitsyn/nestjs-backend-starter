@@ -3,8 +3,8 @@
 > Generated from `progress.json` by `pnpm progress:dashboard`. Do not edit by hand.
 
 **Project status:** in_progress
-**Current stage:** Stage 08 — Security and Observability
-**Next milestone:** M018 — Health and Observability (pending)
+**Current stage:** Stage 09 — Production Deployment
+**Next milestone:** M019 — Production Docker Image (pending)
 
 ## Stage 00 — Preparation
 
@@ -27,7 +27,7 @@
 | 05 | Organizations and Authorization | M012–M014 | completed |
 | 06 | Email and Audit | M015 | completed |
 | 07 | Example Resource | M016 | completed |
-| 08 | Security and Observability | M017–M018 | in_progress |
+| 08 | Security and Observability | M017–M018 | completed |
 | 09 | Production Deployment | M019–M021 | pending |
 | 10 | Final Verification | M022 | pending |
 

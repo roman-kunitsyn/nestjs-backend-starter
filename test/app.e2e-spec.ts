@@ -24,6 +24,11 @@ import {
   type EmailSender,
 } from '../src/modules/email/email-sender.js';
 import { EmailOutboxService } from '../src/modules/email/email-outbox.service.js';
+import {
+  configureHttpMetrics,
+  MetricsService,
+} from '../src/modules/observability/metrics.js';
+import { HealthState } from '../src/modules/observability/health.state.js';
 
 describe('AppController (Fastify E2E)', () => {
   let app: NestFastifyApplication;
@@ -74,6 +79,10 @@ describe('AppController (Fastify E2E)', () => {
     );
     configureApiRouting(app);
     configureRequestCorrelation(app);
+    configureHttpMetrics(
+      app.getHttpAdapter().getInstance(),
+      app.get(MetricsService),
+    );
     await configureHttpSecurity(app, app.get(ConfigService<EnvironmentConfig>));
     setupOpenApi(app, createOpenApiDocument(app), true);
     await app.init();
@@ -90,6 +99,40 @@ describe('AppController (Fastify E2E)', () => {
     expect(response.statusCode).toBe(200);
     expect(response.body).toBe('Hello World!');
     expect(response.headers['x-request-id']).toMatch(/^req_[0-9a-f-]{36}$/);
+  });
+
+  it('exposes live, startup, readiness and Prometheus metrics probes outside the API prefix', async () => {
+    const server = app.getHttpAdapter().getInstance();
+    expect(
+      (await server.inject({ method: 'GET', url: '/health/live' })).json(),
+    ).toEqual({ status: 'ok' });
+    expect(
+      (await server.inject({ method: 'GET', url: '/health/startup' })).json(),
+    ).toEqual({ status: 'ok' });
+    expect(
+      (await server.inject({ method: 'GET', url: '/health/ready' })).json(),
+    ).toEqual({ status: 'ok' });
+    await server.inject({
+      method: 'GET',
+      url: '/health/metrics',
+    });
+    const metrics = await server.inject({
+      method: 'GET',
+      url: '/health/metrics',
+    });
+    expect(metrics.statusCode).toBe(200);
+    expect(metrics.headers['content-type']).toContain(
+      'text/plain; version=0.0.4',
+    );
+    expect(metrics.body).toContain('database_pool_max_connections');
+    expect(metrics.body).toContain(
+      'http_requests_total{method="GET",route="/health/metrics",status_class="2xx"}',
+    );
+    expect(metrics.body).not.toMatch(/userId|organizationId|email=/);
+    app.get(HealthState).beginShutdown();
+    expect(
+      (await server.inject({ method: 'GET', url: '/health/ready' })).statusCode,
+    ).toBe(503);
   });
 
   it('serves an accurate OpenAPI 3.1 document for the real prefixed route', async () => {

@@ -42,6 +42,59 @@ paths:
       summary: Get the starter message
       tags:
         - starter
+  /health/live:
+    get:
+      operationId: live
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      tags: &a1
+        - Health
+  /health/startup:
+    get:
+      operationId: startup
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      tags: *a1
+  /health/ready:
+    get:
+      operationId: ready
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      tags: *a1
+  /health/metrics:
+    get:
+      operationId: metricsText
+      parameters: []
+      responses:
+        "200":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      tags: *a1
   /api/v1/auth/register:
     post:
       operationId: registerUser
@@ -55,7 +108,7 @@ paths:
               schema:
                 type: string
       summary: Create an account
-      tags: &a1
+      tags: &a2
         - Authentication
   /api/v1/auth/verify-email:
     post:
@@ -69,7 +122,7 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      tags: *a1
+      tags: *a2
   /api/v1/auth/resend-verification:
     post:
       operationId: resendVerification
@@ -82,7 +135,7 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      tags: *a1
+      tags: *a2
   /api/v1/auth/forgot-password:
     post:
       operationId: forgotPassword
@@ -95,7 +148,7 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      tags: *a1
+      tags: *a2
   /api/v1/auth/reset-password:
     post:
       operationId: resetPassword
@@ -108,7 +161,7 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      tags: *a1
+      tags: *a2
   /api/v1/auth/login:
     post:
       operationId: login
@@ -121,7 +174,7 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      tags: *a1
+      tags: *a2
   /api/v1/auth/refresh:
     post:
       operationId: refresh
@@ -134,7 +187,7 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      tags: *a1
+      tags: *a2
   /api/v1/auth/logout:
     post:
       operationId: logout
@@ -149,7 +202,7 @@ paths:
                 type: string
       security:
         - bearer: []
-      tags: *a1
+      tags: *a2
   /api/v1/auth/logout-all:
     post:
       operationId: logoutAll
@@ -164,7 +217,7 @@ paths:
                 type: string
       security:
         - bearer: []
-      tags: *a1
+      tags: *a2
   /api/v1/auth/me:
     get:
       operationId: me
@@ -179,7 +232,7 @@ paths:
                 type: string
       security:
         - bearer: []
-      tags: *a1
+      tags: *a2
   /api/v1/auth/sessions:
     get:
       operationId: sessionsList
@@ -194,7 +247,7 @@ paths:
                 type: string
       security:
         - bearer: []
-      tags: *a1
+      tags: *a2
   /api/v1/auth/sessions/{id}:
     delete:
       operationId: revoke
@@ -214,7 +267,7 @@ paths:
                 type: string
       security:
         - bearer: []
-      tags: *a1
+      tags: *a2
   /api/v1/auth/change-password:
     post:
       operationId: changePassword
@@ -229,7 +282,7 @@ paths:
                 type: string
       security:
         - bearer: []
-      tags: *a1
+      tags: *a2
   /api/v1/users/me:
     get:
       operationId: me
@@ -328,10 +381,10 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: &a2
+      security: &a3
         - bearer: []
       summary: Create an organization
-      tags: &a3
+      tags: &a4
         - Organizations
     get:
       operationId: listOrganizations
@@ -399,9 +452,9 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: *a2
+      security: *a3
       summary: List the current user’s organizations
-      tags: *a3
+      tags: *a4
   /api/v1/organizations/{organizationId}:
     get:
       operationId: getOrganization
@@ -453,9 +506,9 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: *a2
+      security: *a3
       summary: Get an organization
-      tags: *a3
+      tags: *a4
     patch:
       operationId: updateOrganization
       parameters:
@@ -521,9 +574,9 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: *a2
+      security: *a3
       summary: Update an organization
-      tags: *a3
+      tags: *a4
   /api/v1/organizations/{organizationId}/suspend:
     post:
       operationId: suspendOrganization
@@ -575,9 +628,9 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: *a2
+      security: *a3
       summary: Suspend an organization
-      tags: *a3
+      tags: *a4
   /api/v1/organizations/{organizationId}/archive:
     post:
       operationId: archiveOrganization
@@ -629,9 +682,9 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: *a2
+      security: *a3
       summary: Archive an organization
-      tags: *a3
+      tags: *a4
   /api/v1/organizations/{organizationId}/activate:
     post:
       operationId: activateOrganization
@@ -683,9 +736,9 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: *a2
+      security: *a3
       summary: Reactivate a suspended organization
-      tags: *a3
+      tags: *a4
   /api/v1/organizations/{organizationId}/members:
     get:
       operationId: listOrganizationMembers
@@ -704,10 +757,10 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: &a4
+      security: &a5
         - bearer: []
       summary: List organization members
-      tags: &a5
+      tags: &a6
         - Organization memberships and invitations
   /api/v1/organizations/{organizationId}/members/{membershipId}:
     patch:
@@ -749,9 +802,9 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: *a4
+      security: *a5
       summary: Change a member role
-      tags: *a5
+      tags: *a6
     delete:
       operationId: removeOrganizationMember
       parameters:
@@ -775,9 +828,9 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: *a4
+      security: *a5
       summary: Remove a member
-      tags: *a5
+      tags: *a6
   /api/v1/organizations/{organizationId}/leave:
     post:
       operationId: leaveOrganization
@@ -796,9 +849,9 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: *a4
+      security: *a5
       summary: Leave an organization
-      tags: *a5
+      tags: *a6
   /api/v1/organizations/{organizationId}/ownership-transfer:
     post:
       operationId: transferOrganizationOwnership
@@ -834,9 +887,9 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: *a4
+      security: *a5
       summary: Transfer organization ownership
-      tags: *a5
+      tags: *a6
   /api/v1/organizations/{organizationId}/invitations:
     post:
       operationId: createOrganizationInvitation
@@ -875,9 +928,9 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: *a4
+      security: *a5
       summary: Invite a person by email
-      tags: *a5
+      tags: *a6
     get:
       operationId: listOrganizationInvitations
       parameters:
@@ -895,9 +948,9 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: *a4
+      security: *a5
       summary: List organization invitations
-      tags: *a5
+      tags: *a6
   /api/v1/organizations/{organizationId}/invitations/{invitationId}:
     delete:
       operationId: revokeOrganizationInvitation
@@ -922,9 +975,9 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: *a4
+      security: *a5
       summary: Revoke an invitation
-      tags: *a5
+      tags: *a6
   /api/v1/invitations/accept:
     post:
       operationId: acceptOrganizationInvitation
@@ -950,9 +1003,9 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: *a4
+      security: *a5
       summary: Accept an invitation for the authenticated account
-      tags: *a5
+      tags: *a6
   /api/v1/organizations/{organizationId}/resources:
     post:
       operationId: createExampleResource
@@ -1081,10 +1134,10 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: &a6
+      security: &a7
         - bearer: []
       summary: Create a resource
-      tags: &a7
+      tags: &a8
         - Example resources
     get:
       operationId: listExampleResources
@@ -1253,9 +1306,9 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: *a6
+      security: *a7
       summary: List tenant resources
-      tags: *a7
+      tags: *a8
   /api/v1/organizations/{organizationId}/resources/{resourceId}:
     get:
       operationId: getExampleResource
@@ -1365,9 +1418,9 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: *a6
+      security: *a7
       summary: Get a tenant resource
-      tags: *a7
+      tags: *a8
     patch:
       operationId: updateExampleResource
       parameters:
@@ -1499,9 +1552,9 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: *a6
+      security: *a7
       summary: Update a tenant resource
-      tags: *a7
+      tags: *a8
     delete:
       operationId: deleteExampleResource
       parameters:
@@ -1569,9 +1622,9 @@ paths:
               description: Request correlation identifier.
               schema:
                 type: string
-      security: *a6
+      security: *a7
       summary: Delete a tenant resource
-      tags: *a7
+      tags: *a8
 info:
   title: NestJS Backend Starter API
   description: REST API contract for the NestJS backend starter.

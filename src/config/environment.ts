@@ -7,6 +7,11 @@ const EnvironmentInputSchema = z.object({
     .default('development'),
   APP_NAME: z.string().trim().min(1).max(80).default('nestjs-backend-starter'),
   APP_HOST: z.string().trim().min(1).default('127.0.0.1'),
+  OTEL_ENABLED: z.preprocess(
+    (value) => (value === 'true' ? true : value === 'false' ? false : value),
+    z.boolean().default(false),
+  ),
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: z.string().url().optional(),
   HTTP_CORS_ORIGINS: z.string().default(''),
   HTTP_TRUSTED_PROXY_CIDRS: z.string().default(''),
   HTTP_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(100000).default(120),
