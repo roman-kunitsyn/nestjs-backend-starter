@@ -1,8 +1,8 @@
 {
   "project": {
-    "status": "in_progress",
+    "status": "completed",
     "current_stage": "Stage 10 — Final Verification",
-    "next_milestone": "M022"
+    "next_milestone": null
   },
   "stages": [
     {
@@ -100,7 +100,7 @@
     {
       "id": "stage-10",
       "title": "Final Verification",
-      "status": "pending",
+      "status": "completed",
       "milestones": [
         "M022"
       ]
@@ -540,11 +540,22 @@
       "id": "M022",
       "title": "Final Review and Acceptance",
       "stage": "stage-10",
-      "status": "pending",
+      "status": "completed",
       "dependencies": [
         "M021"
       ],
-      "contract": "milestones/M022-final-acceptance.md"
+      "contract": "milestones/M022-final-acceptance.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Format, lint, strict typecheck, build, unit/E2E/PostgreSQL integration, OpenAPI, migration, Helm and progress checks passed",
+          "Production dependency audit reported no known vulnerabilities; local image HIGH/CRITICAL scan gate passed",
+          "Fresh kind v1.37.0 and PostgreSQL 18.6: Helm install/upgrade migration hooks, 2/2 probes, API smoke, compatible-image rollback, synthetic dump/restore and restored-database readiness passed",
+          "Calico v3.33.0 NetworkPolicy ingress/egress allow and deny probes passed; pod security and service-account token settings verified",
+          "README and operational documentation reconciled; requirements and M021 evidence reviewed; consumer-only deployment limitations recorded",
+          "All acceptance evidence recorded; disposable clusters removed; project and Stage 10 completion validated"
+        ]
+      }
     }
   ]
 }
