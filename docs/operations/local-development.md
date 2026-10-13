@@ -48,3 +48,23 @@ pnpm infra:down
 ```
 
 Use `docker compose down -v` only when you intend to delete the local PostgreSQL volume. Run database migrations explicitly with `pnpm db:migrate`; application startup never migrates the database. See [Migrations](migrations.md) for the schema workflow.
+
+## Production image
+
+Build the multi-stage production image with the pinned Node 24 patch release and the committed pnpm lockfile:
+
+```bash
+pnpm image:build
+```
+
+The runtime stage contains `dist`, `package.json`, and production dependencies only. It runs as the unprivileged `node` user and starts `node dist/main.js`; it does not run migrations. Supply production configuration through your deployment's secret mechanism. Required production JWT, refresh, cursor, database, and SMTP settings are validated at startup. Never bake an env file or credentials into the image.
+
+For a local container smoke check, start the disposable database and run the helper. It generates temporary production-format signing secrets in memory, binds an ephemeral localhost port, starts the container with `--read-only` and a small `/tmp` tmpfs, verifies readiness and the production-only runtime contents, and checks that SIGTERM exits cleanly. It never writes test secrets to disk. Set `IMAGE_SMOKE_DATABASE_URL` to override the default Docker Desktop host connection.
+
+```bash
+pnpm infra:up
+pnpm image:smoke
+pnpm infra:down
+```
+
+Inspect the image identity and runtime user with `docker image inspect nestjs-backend-starter:local --format '{{.Config.User}} {{json .Config.Labels}}'`. `pnpm image:build` supplies the UTC build time, Git revision (marked `-dirty` when tracked files differ from `HEAD`), and package version as OCI metadata; release automation can override these build arguments when building from a tagged source. Scan the built image using `pnpm image:scan`; this command requires Trivy installed on the build host and fails on HIGH or CRITICAL findings.

@@ -4,7 +4,7 @@ import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module.js';
 import { EnvironmentConfig } from './config/environment.js';
-import { PinoLogger } from 'nestjs-pino';
+import { Logger } from 'nestjs-pino';
 import { createOpenApiDocument, setupOpenApi } from './common/openapi.js';
 import {
   configureAdapterProblemDetails,
@@ -37,7 +37,7 @@ configureRequestCorrelation(app);
 const metrics = app.get(MetricsService);
 const fastify = app.getHttpAdapter().getInstance();
 configureHttpMetrics(fastify, metrics);
-app.useLogger(app.get(PinoLogger));
+app.useLogger(app.get(Logger));
 await configureHttpSecurity(app, config);
 const openApi = createOpenApiDocument(app);
 setupOpenApi(

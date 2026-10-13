@@ -1,6 +1,6 @@
 {
   "project": {
-    "status": "in_progress",
+    "status": "blocked",
     "current_stage": "Stage 09 — Production Deployment",
     "next_milestone": "M019"
   },
@@ -90,7 +90,7 @@
     {
       "id": "stage-09",
       "title": "Production Deployment",
-      "status": "pending",
+      "status": "in_progress",
       "milestones": [
         "M019",
         "M020",
@@ -480,7 +480,7 @@
       "id": "M019",
       "title": "Production Docker Image",
       "stage": "stage-09",
-      "status": "pending",
+      "status": "blocked",
       "dependencies": [
         "M018"
       ],
