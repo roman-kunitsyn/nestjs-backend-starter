@@ -4,7 +4,7 @@
 
 A modular, secure, and extensible foundation for building REST APIs for SaaS platforms, consumer applications, admin dashboards, and mobile backends.
 
-> **Project status:** Starter template specification. Features described in this README represent the intended implementation and must be verified before marking the project production-ready.
+> **Project status:** The approved implementation roadmap and final template acceptance are complete. Local quality, PostgreSQL, Docker, Helm, and disposable Kubernetes checks passed; [hosted CI and release evidence](docs/implementation/milestones/M021-cicd.md) is recorded in M021. This is reusable-template evidence; adopters must still configure and verify their own production infrastructure, secrets, TLS/DNS, managed database recovery, and deployment policies.
 
 ## Overview
 
@@ -43,7 +43,7 @@ The project follows a **modular monolith** architecture with clear separation be
 | Authorization        | RBAC + resource ownership policies          |
 | Multi-tenancy        | Organization-based, shared schema           |
 | Logging              | Pino                                        |
-| Health checks        | NestJS Terminus                             |
+| Health checks        | NestJS/Fastify health endpoints             |
 | Metrics and tracing  | OpenTelemetry-compatible                    |
 | Testing              | Jest, Fastify injection, Testcontainers     |
 | Package manager      | pnpm                                        |
@@ -187,6 +187,8 @@ Business logic should not directly depend on HTTP transports or external service
 
 ## Project structure
 
+The following is a conceptual map of the approved module boundaries, not an exact file inventory. The implemented Helm chart is under `helm/nestjs-backend-starter/`; see the repository tree for current source paths.
+
 ```text
 nestjs-backend-starter/
 ├── src/
@@ -250,8 +252,8 @@ nestjs-backend-starter/
 │   ├── fixtures/
 │   └── helpers/
 │
-├── deploy/
-│   └── helm/backend/
+├── helm/
+│   └── nestjs-backend-starter/
 │
 ├── scripts/
 ├── docs/
@@ -306,7 +308,7 @@ pnpm install --frozen-lockfile
 cp .env.example .env
 ```
 
-`.env.example` contains local-only PostgreSQL credentials and the application defaults. Startup currently validates `NODE_ENV`, `APP_NAME`, `APP_HOST`, and `PORT`; later milestones add feature-specific settings and validation. Do not use the example database password outside local development.
+`.env.example` contains local-only PostgreSQL credentials and development defaults for database, API, authentication, and email configuration. Startup validates configuration with Zod. Do not use example credentials outside local development.
 
 ### 4. Start local infrastructure
 
@@ -314,7 +316,14 @@ cp .env.example .env
 pnpm infra:up
 ```
 
-This starts the local PostgreSQL service configured in `compose.yaml`. The app does not connect to the database yet; Drizzle and migration support are introduced in later milestones.
+This starts the local PostgreSQL service configured in `compose.yaml`.
+
+Apply the schema and reference authorization data before starting the application:
+
+```bash
+pnpm db:migrate
+pnpm db:seed:reference
+```
 
 ### 5. Start the development server
 
@@ -322,24 +331,25 @@ This starts the local PostgreSQL service configured in `compose.yaml`. The app d
 pnpm start:dev
 ```
 
-The current smoke endpoint is `GET http://127.0.0.1:3000/` and returns `Hello World!`.
+The API base route is `GET http://127.0.0.1:3000/api/v1` and returns `Hello World!`.
 
 For the complete current setup, see [Local development](docs/operations/local-development.md).
 
-The following API and health URLs are planned and are not available in this bootstrap milestone:
+The current API, documentation, and health routes include:
 
 | Resource          | URL                                    |
 | ----------------- | -------------------------------------- |
-| REST API          | `http://localhost:3000/api/v1`         |
+| REST API base     | `http://localhost:3000/api/v1`         |
 | API documentation | `http://localhost:3000/docs`           |
-| OpenAPI document  | `http://localhost:3000/openapi.json`   |
+| OpenAPI JSON      | `http://localhost:3000/openapi.json`   |
+| OpenAPI YAML      | `http://localhost:3000/openapi.yaml`   |
 | Liveness          | `http://localhost:3000/health/live`    |
 | Readiness         | `http://localhost:3000/health/ready`   |
 | Startup           | `http://localhost:3000/health/startup` |
 
 ## Environment configuration
 
-The bootstrap currently validates `NODE_ENV`, `APP_NAME`, `APP_HOST`, and `PORT` with Zod. Database, authentication, email, and observability settings will be added with their implementation milestones.
+Configuration is validated with Zod at startup. See [Local development](docs/operations/local-development.md) for supported settings and safe failure behavior.
 
 Never commit `.env` files or production credentials.
 
@@ -594,8 +604,8 @@ The application uses PostgreSQL with Drizzle ORM.
 pnpm db:generate
 pnpm db:migrate
 pnpm db:check
-pnpm db:studio
-pnpm db:seed
+pnpm db:seed:reference
+pnpm db:seed:dev
 ```
 
 Do not run schema-destructive development commands against production databases.
@@ -688,22 +698,7 @@ E2E tests cover:
 - REST validation.
 - Error behavior.
 
-### Coverage
-
-```bash
-pnpm test:coverage
-```
-
-Initial coverage targets:
-
-| Metric     | Target |
-| ---------- | ------ |
-| Statements | 80%    |
-| Branches   | 75%    |
-| Functions  | 80%    |
-| Lines      | 80%    |
-
-Security-critical components must have comprehensive behavioral testing regardless of aggregate coverage.
+Security-critical components have behavioral unit, integration, and E2E tests. The repository does not define a coverage-threshold script.
 
 ## Logging and observability
 
@@ -910,8 +905,13 @@ Database migrations must be compatible with rolling application updates.
 | `pnpm test:e2e`         | End-to-end tests                 |
 | `pnpm infra:up`         | Start local infrastructure       |
 | `pnpm infra:down`       | Stop local infrastructure        |
+| `pnpm db:migrate`       | Apply checked-in migrations      |
+| `pnpm db:seed:reference`| Insert reference permissions     |
+| `pnpm openapi:check`    | Validate generated API artifacts |
+| `pnpm helm:lint`        | Lint the Kubernetes chart        |
+| `pnpm progress:validate`| Validate roadmap state           |
 
-Database migrations and other planned scripts will be added with their milestones. The project-status notice remains until final acceptance verifies the full command set.
+See [Local development](docs/operations/local-development.md), [Testing](docs/operations/testing.md), [Migrations](docs/operations/migrations.md), and [Kubernetes operations](docs/operations/kubernetes.md) for complete workflows. Local acceptance does not verify an adopter's cloud deployment or managed PostgreSQL PITR.
 
 ## Documentation
 
@@ -953,6 +953,8 @@ Potential extensions:
 The architectural boundaries should allow these capabilities to be introduced without major rewrites.
 
 ## Production readiness
+
+This checklist is for adopters preparing their own application deployment. M022 validates the reusable template locally; it does not verify a consumer's cloud environment, production credentials, managed database recovery, or live deployment.
 
 Before deploying a real product, verify:
 

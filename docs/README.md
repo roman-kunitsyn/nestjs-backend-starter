@@ -14,7 +14,9 @@ This directory is the project's persistent technical and implementation record. 
 
 Account endpoint behavior and current lifecycle limitations are documented in [authentication operations](operations/authentication.md).
 
-The current scaffold setup is in [Local development](operations/local-development.md).
+Local development setup is documented in [Local development](operations/local-development.md).
+
+The completed implementation and final template-level acceptance evidence are recorded in [M022 — Final Review and Acceptance](implementation/milestones/M022-final-acceptance.md). Cloud deployment, production credentials, managed PostgreSQL PITR, and production disaster recovery remain adopter responsibilities.
 
 Health probes, metrics, and optional tracing are described in [Observability operations](operations/observability.md).
 
