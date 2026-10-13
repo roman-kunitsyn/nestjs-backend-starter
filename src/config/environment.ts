@@ -30,6 +30,16 @@ const EnvironmentInputSchema = z.object({
   AUTH_JWT_PUBLIC_KEY: z.string().default(''),
   AUTH_JWT_PUBLIC_KEYS: z.string().default(''),
   AUTH_REFRESH_TOKEN_KEY: z.string().default(''),
+  RESOURCE_CURSOR_SECRET: z
+    .string()
+    .min(32)
+    .default('local-resource-cursor-secret-change-me'),
+  RESOURCE_IDEMPOTENCY_RETENTION_HOURS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(720)
+    .default(24),
   AUTH_REFRESH_COOKIE_SECURE: z.preprocess(
     (value) => (value === 'true' ? true : value === 'false' ? false : value),
     z.boolean().optional(),
@@ -75,6 +85,14 @@ export function validateEnvironment(
     ) {
       throw new Error(
         'Invalid environment configuration: AUTH_REFRESH_TOKEN_KEY must contain at least 43 base64url characters in production',
+      );
+    }
+    if (
+      parsed.data.NODE_ENV === 'production' &&
+      parsed.data.RESOURCE_CURSOR_SECRET.length < 43
+    ) {
+      throw new Error(
+        'Invalid environment configuration: RESOURCE_CURSOR_SECRET must contain at least 43 characters in production',
       );
     }
     if (

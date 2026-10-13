@@ -11,6 +11,7 @@ import { DatabaseModule } from './infrastructure/database/database.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { SessionGuard } from './modules/auth/session.guard.js';
 import { OrganizationsModule } from './modules/organizations/organizations.module.js';
+import { ResourcesModule } from './modules/resources/resources.module.js';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { OrganizationsModule } from './modules/organizations/organizations.modul
     DatabaseModule,
     AuthModule,
     OrganizationsModule,
+    ResourcesModule,
     LoggerModule.forRoot({
       pinoHttp: {
         level: process.env.NODE_ENV === 'test' ? 'silent' : 'info',

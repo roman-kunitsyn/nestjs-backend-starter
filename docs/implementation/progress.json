@@ -1,41 +1,499 @@
 {
-  "project": {"status":"in_progress","current_stage":"Stage 07 — Example Resource","next_milestone":"M016"},
+  "project": {
+    "status": "in_progress",
+    "current_stage": "Stage 08 — Security and Observability",
+    "next_milestone": "M017"
+  },
   "stages": [
-    {"id":"stage-00","title":"Preparation","status":"completed","milestones":["M000","M001","M002","M003","M004"]},
-    {"id":"stage-01","title":"Project Bootstrap","status":"completed","milestones":["M005"]},
-    {"id":"stage-02","title":"HTTP and API Foundation","status":"completed","milestones":["M006","M007"]},
-    {"id":"stage-03","title":"Database Infrastructure","status":"completed","milestones":["M008","M009"]},
-    {"id":"stage-04","title":"Identity and Sessions","status":"completed","milestones":["M010","M011"]},
-    {"id":"stage-05","title":"Organizations and Authorization","status":"completed","milestones":["M012","M013","M014"]},
-    {"id":"stage-06","title":"Email and Audit","status":"completed","milestones":["M015"]},
-    {"id":"stage-07","title":"Example Resource","status":"pending","milestones":["M016"]},
-    {"id":"stage-08","title":"Security and Observability","status":"pending","milestones":["M017","M018"]},
-    {"id":"stage-09","title":"Production Deployment","status":"pending","milestones":["M019","M020","M021"]},
-    {"id":"stage-10","title":"Final Verification","status":"pending","milestones":["M022"]}
+    {
+      "id": "stage-00",
+      "title": "Preparation",
+      "status": "completed",
+      "milestones": [
+        "M000",
+        "M001",
+        "M002",
+        "M003",
+        "M004"
+      ]
+    },
+    {
+      "id": "stage-01",
+      "title": "Project Bootstrap",
+      "status": "completed",
+      "milestones": [
+        "M005"
+      ]
+    },
+    {
+      "id": "stage-02",
+      "title": "HTTP and API Foundation",
+      "status": "completed",
+      "milestones": [
+        "M006",
+        "M007"
+      ]
+    },
+    {
+      "id": "stage-03",
+      "title": "Database Infrastructure",
+      "status": "completed",
+      "milestones": [
+        "M008",
+        "M009"
+      ]
+    },
+    {
+      "id": "stage-04",
+      "title": "Identity and Sessions",
+      "status": "completed",
+      "milestones": [
+        "M010",
+        "M011"
+      ]
+    },
+    {
+      "id": "stage-05",
+      "title": "Organizations and Authorization",
+      "status": "completed",
+      "milestones": [
+        "M012",
+        "M013",
+        "M014"
+      ]
+    },
+    {
+      "id": "stage-06",
+      "title": "Email and Audit",
+      "status": "completed",
+      "milestones": [
+        "M015"
+      ]
+    },
+    {
+      "id": "stage-07",
+      "title": "Example Resource",
+      "status": "completed",
+      "milestones": [
+        "M016"
+      ]
+    },
+    {
+      "id": "stage-08",
+      "title": "Security and Observability",
+      "status": "pending",
+      "milestones": [
+        "M017",
+        "M018"
+      ]
+    },
+    {
+      "id": "stage-09",
+      "title": "Production Deployment",
+      "status": "pending",
+      "milestones": [
+        "M019",
+        "M020",
+        "M021"
+      ]
+    },
+    {
+      "id": "stage-10",
+      "title": "Final Verification",
+      "status": "pending",
+      "milestones": [
+        "M022"
+      ]
+    }
   ],
   "milestones": [
-    {"id":"M000","title":"Documentation Structure","stage":"stage-00","status":"completed","dependencies":[],"contract":"milestones/M000-documentation-structure.md","completion":{"date":"2026-10-13","verification":["Documentation paths/navigation and source preservation checked","Bootstrap progress selection and staged diff validated"]}},
-    {"id":"M001","title":"Architecture Decomposition","stage":"stage-00","status":"completed","dependencies":["M000"],"contract":"milestones/M001-architecture-decomposition.md","completion":{"date":"2026-10-13","verification":["Entire 2,559-line source reviewed","Requirements mapped into 13 architecture documents","Links/progress/staged diff validated; source unchanged"]}},
-    {"id":"M002","title":"Architecture Reconciliation","stage":"stage-00","status":"completed","dependencies":["M001"],"contract":"milestones/M002-architecture-reconciliation.md","completion":{"date":"2026-10-13","verification":["Source ambiguities reconciled/documented","ADR-001 accepted for postgres.js","Links/progress/dependency graph and staged diff validated"]}},
-    {"id":"M003","title":"Complete Implementation Roadmap","stage":"stage-00","status":"completed","dependencies":["M002"],"contract":"milestones/M003-complete-implementation-roadmap.md","completion":{"date":"2026-10-13","verification":["Stages 00–10 and milestones M000–M022 defined","Requirement matrix and definitions of done created","All planned contracts, including M004, created","Progress graph and documentation links validated","Staged diff whitespace check passed"]}},
-    {"id":"M004","title":"Execution Readiness","stage":"stage-00","status":"completed","dependencies":["M003"],"contract":"milestones/M004-execution-readiness.md","completion":{"date":"2026-10-13","verification":["Progress validator checks IDs, statuses, stage/order, dependency graph, contracts, traceability, and deterministic selection","Regression cases passed for duplicate ID, invalid status/reference, dependency cycle, multiple active milestones, incomplete dependency, and wrong next milestone","Dashboard regenerated and verified; active-work recovery behavior checked","Stage 00 exit criteria passed; M005 selected as next milestone"]}},
-    {"id":"M005","title":"Project Bootstrap and Local Workflow","stage":"stage-01","status":"completed","dependencies":["M004"],"contract":"milestones/M005-project-bootstrap.md","completion":{"date":"2026-10-13","verification":["pnpm install --frozen-lockfile passed","ESLint, Prettier check, strict typecheck, Jest unit tests (7), Fastify E2E smoke test (1), and Nest build passed","Development and compiled production startup served GET / as Hello World!","Invalid NODE_ENV failed startup with field-only validation details","Docker Compose config validated; PostgreSQL 18.6 healthcheck passed via pnpm infra:up; container stopped and named data volume retained","Progress validator passed; M006 selected as next milestone"]}},
-    {"id":"M006","title":"Zod Request Validation and API Versioning","stage":"stage-02","status":"completed","dependencies":["M005"],"contract":"milestones/M006-zod-validation.md","completion":{"date":"2026-10-13","verification":["Lint, Prettier check, strict typecheck, and Nest build passed","Unit tests passed: 9 tests across 3 suites","Fastify E2E passed: 6 tests across 2 suites, including body/path/query validation, size limit, and health namespace","Progress validator passed; M007 selected as next milestone"]}},
-    {"id":"M007","title":"Problem Details, Logging, and OpenAPI","stage":"stage-02","status":"completed","dependencies":["M006"],"contract":"milestones/M007-http-contracts.md","completion":{"date":"2026-10-13","verification":["Problem Details and request correlation Fastify E2E cases passed, including validation, body limit, supplied/invalid request IDs, and production-safe unexpected error response","Pino redaction configuration and production API docs default covered by configuration and environment tests","Unit tests passed: 13 tests across 4 suites; Fastify E2E passed: 11 tests across 2 suites, including JSON/YAML/docs routes","Formatting, lint, strict typecheck, Nest build, OpenAPI generation and 3.1 artifact freshness check passed","Progress validator and regression tests passed; M008 selected as next milestone"]}},
-    {"id":"M008","title":"PostgreSQL and Drizzle Infrastructure","stage":"stage-03","status":"completed","dependencies":["M007"],"contract":"milestones/M008-database-infrastructure.md","completion":{"date":"2026-10-13","verification":["PostgreSQL 18 Testcontainers integration generated a Drizzle Kit fixture migration into a temporary directory, applied it to a fresh database, and verified table creation and transaction execution","Lint, formatting, strict typecheck, build, 14 unit tests, 11 Fastify E2E tests, and 1 integration test passed","Drizzle Kit migration check passed; progress validator and 11 tracking regression cases passed; M009 selected next"]}},
-    {"id":"M009","title":"Core Schema, Migrations, and Seeds","stage":"stage-03","status":"completed","dependencies":["M008"],"contract":"milestones/M009-core-database-schema.md","completion":{"date":"2026-10-13","verification":["Fresh PostgreSQL 18 migration from zero passed; all 15 tables created","Reference/dev seeds repeated idempotently; dev seed production refusal passed","Composite tenant FK, reserved slug check, rollback and required index introspection passed","Formatting, lint, strict typecheck, build, 14 unit tests, 11 Fastify E2E tests, 2 PostgreSQL integration tests, Drizzle migration check and 11 progress regressions passed","Stage 03 exit criteria passed; M010 selected next"]}},
-    {"id":"M010","title":"User Credentials and Account Lifecycle","stage":"stage-04","status":"completed","dependencies":["M009"],"contract":"milestones/M010-user-account-lifecycle.md","completion":{"date":"2026-10-13","verification":["Normalized account registration, Argon2id credential storage, single-use verification/reset tokens, recovery enumeration resistance, status enforcement and password confirmation verified against PostgreSQL 18","Concurrent token issuance limit and password-update compare-and-set behavior verified","Fastify E2E covers registration projection, duplicate email, recovery response equality, malformed input and invalid verification token","Format, lint, strict typecheck, 18 unit tests, 15 E2E tests, 7 PostgreSQL integration tests, Nest build and OpenAPI artifact check passed","Authenticated identity/profile/password-change routes assigned to M011 with approved milestone-boundary resolution","Progress tracking validation passed; M011 selected next"]}},
-    {"id":"M011","title":"JWT Sessions and Refresh Rotation","stage":"stage-04","status":"completed","dependencies":["M010"],"contract":"milestones/M011-session-lifecycle.md","completion":{"date":"2026-10-13","verification":["EdDSA JWT claim/signature/expiry/key rotation tests; production key validation","Fastify E2E: 16 tests across 2 suites passed, including login, refresh cookie, authenticated identity and logout revocation","PostgreSQL integration: 8 tests across 2 suites passed, including concurrent idempotent refresh, late replay revocation/audit, and password-driven session revocation","Lint, format check, strict typecheck, 22 unit tests, Nest build and OpenAPI generation/freshness check passed"]}},
-    {"id":"M012","title":"Permission Model and Authorization Policies","stage":"stage-05","status":"completed","dependencies":["M011"],"contract":"milestones/M012-authorization.md","completion":{"date":"2026-10-13","verification":["Global guard explicitly allows only @Public routes; protected routes reject missing credentials with 401","Role policy unit tests passed; PostgreSQL integration verified active membership/organization grants, least privilege, suspension, and cross-organization denial","Fastify E2E passed for public auth flows and anonymous protected-route denial","Lint, format check, strict typecheck, build, unit tests, integration tests, and E2E tests passed","Progress validator passed; M013 selected next"]}},
-    {"id":"M013","title":"Organization Lifecycle and Ownership","stage":"stage-05","status":"completed","dependencies":["M012"],"contract":"milestones/M013-organizations.md","completion":{"date":"2026-10-13","verification":["Lint, format check, strict typecheck, and Nest build passed","23 unit tests passed; 18 Fastify E2E tests passed, including PostgreSQL-backed organization create/owner transaction, registration independence, slug normalization/reserved/duplicate handling, cross-organization 404, active-member permission 403, update, suspend, activate, and archive","8 PostgreSQL integration tests passed","OpenAPI artifacts regenerated and freshness/validity check passed","Progress validation passed; M014 selected as next milestone"]}},
-    {"id":"M014","title":"Memberships and Invitations","stage":"stage-05","status":"completed","dependencies":["M013"],"contract":"milestones/M014-memberships-invitations.md","completion":{"date":"2026-10-13","verification":["Member and invitation APIs enforce active organization membership, permission grants, actor role authority, and organization-scoped IDs","Fastify E2E: 18 tests across 2 suites passed, including existing/new account invitation acceptance, revoke/reuse, verified-email proof, role change/removal, last-owner leave rejection, ownership transfer, and organization lifecycle","Concurrent PostgreSQL-backed member removal and ownership transfer race left exactly one active OWNER","PostgreSQL integration: 8 tests across 2 suites passed","Lint, format check, strict typecheck, 23 unit tests, Nest build, OpenAPI generation/freshness, Drizzle migration check, and 11 progress regression tests passed"]}},
-    {"id":"M015","title":"Email Delivery and Audit Outbox","stage":"stage-06","status":"completed","dependencies":["M014"],"contract":"milestones/M015-email-audit.md","completion":{"date":"2026-10-13","verification":["Template escaping and authenticated SMTP/TLS tests passed; unit suite: 26 tests","PostgreSQL integration suite passed: 10 tests including atomic producer persistence during SMTP failure, exclusive concurrent claims, bounded retry and expired-lease handling, session-revocation notice/audit, and audit metadata redaction","Fastify E2E suite passed: 18 tests","Lint, Prettier check, strict typecheck, Nest build, Drizzle migration check, and OpenAPI artifact check passed","M015 email and audit operations documented; M016 selected next"]}},
-    {"id":"M016","title":"Tenant-Scoped Example Resources","stage":"stage-07","status":"pending","dependencies":["M015"],"contract":"milestones/M016-example-resources.md"},
-    {"id":"M017","title":"Application Security Controls","stage":"stage-08","status":"pending","dependencies":["M016"],"contract":"milestones/M017-security-controls.md"},
-    {"id":"M018","title":"Health and Observability","stage":"stage-08","status":"pending","dependencies":["M017"],"contract":"milestones/M018-observability.md"},
-    {"id":"M019","title":"Production Docker Image","stage":"stage-09","status":"pending","dependencies":["M018"],"contract":"milestones/M019-docker-image.md"},
-    {"id":"M020","title":"Helm and Kubernetes Operations","stage":"stage-09","status":"pending","dependencies":["M019"],"contract":"milestones/M020-kubernetes-deployment.md"},
-    {"id":"M021","title":"CI/CD and Release Safety","stage":"stage-09","status":"pending","dependencies":["M020"],"contract":"milestones/M021-cicd.md"},
-    {"id":"M022","title":"Final Review and Acceptance","stage":"stage-10","status":"pending","dependencies":["M021"],"contract":"milestones/M022-final-acceptance.md"}
+    {
+      "id": "M000",
+      "title": "Documentation Structure",
+      "stage": "stage-00",
+      "status": "completed",
+      "dependencies": [],
+      "contract": "milestones/M000-documentation-structure.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Documentation paths/navigation and source preservation checked",
+          "Bootstrap progress selection and staged diff validated"
+        ]
+      }
+    },
+    {
+      "id": "M001",
+      "title": "Architecture Decomposition",
+      "stage": "stage-00",
+      "status": "completed",
+      "dependencies": [
+        "M000"
+      ],
+      "contract": "milestones/M001-architecture-decomposition.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Entire 2,559-line source reviewed",
+          "Requirements mapped into 13 architecture documents",
+          "Links/progress/staged diff validated; source unchanged"
+        ]
+      }
+    },
+    {
+      "id": "M002",
+      "title": "Architecture Reconciliation",
+      "stage": "stage-00",
+      "status": "completed",
+      "dependencies": [
+        "M001"
+      ],
+      "contract": "milestones/M002-architecture-reconciliation.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Source ambiguities reconciled/documented",
+          "ADR-001 accepted for postgres.js",
+          "Links/progress/dependency graph and staged diff validated"
+        ]
+      }
+    },
+    {
+      "id": "M003",
+      "title": "Complete Implementation Roadmap",
+      "stage": "stage-00",
+      "status": "completed",
+      "dependencies": [
+        "M002"
+      ],
+      "contract": "milestones/M003-complete-implementation-roadmap.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Stages 00–10 and milestones M000–M022 defined",
+          "Requirement matrix and definitions of done created",
+          "All planned contracts, including M004, created",
+          "Progress graph and documentation links validated",
+          "Staged diff whitespace check passed"
+        ]
+      }
+    },
+    {
+      "id": "M004",
+      "title": "Execution Readiness",
+      "stage": "stage-00",
+      "status": "completed",
+      "dependencies": [
+        "M003"
+      ],
+      "contract": "milestones/M004-execution-readiness.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Progress validator checks IDs, statuses, stage/order, dependency graph, contracts, traceability, and deterministic selection",
+          "Regression cases passed for duplicate ID, invalid status/reference, dependency cycle, multiple active milestones, incomplete dependency, and wrong next milestone",
+          "Dashboard regenerated and verified; active-work recovery behavior checked",
+          "Stage 00 exit criteria passed; M005 selected as next milestone"
+        ]
+      }
+    },
+    {
+      "id": "M005",
+      "title": "Project Bootstrap and Local Workflow",
+      "stage": "stage-01",
+      "status": "completed",
+      "dependencies": [
+        "M004"
+      ],
+      "contract": "milestones/M005-project-bootstrap.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "pnpm install --frozen-lockfile passed",
+          "ESLint, Prettier check, strict typecheck, Jest unit tests (7), Fastify E2E smoke test (1), and Nest build passed",
+          "Development and compiled production startup served GET / as Hello World!",
+          "Invalid NODE_ENV failed startup with field-only validation details",
+          "Docker Compose config validated; PostgreSQL 18.6 healthcheck passed via pnpm infra:up; container stopped and named data volume retained",
+          "Progress validator passed; M006 selected as next milestone"
+        ]
+      }
+    },
+    {
+      "id": "M006",
+      "title": "Zod Request Validation and API Versioning",
+      "stage": "stage-02",
+      "status": "completed",
+      "dependencies": [
+        "M005"
+      ],
+      "contract": "milestones/M006-zod-validation.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Lint, Prettier check, strict typecheck, and Nest build passed",
+          "Unit tests passed: 9 tests across 3 suites",
+          "Fastify E2E passed: 6 tests across 2 suites, including body/path/query validation, size limit, and health namespace",
+          "Progress validator passed; M007 selected as next milestone"
+        ]
+      }
+    },
+    {
+      "id": "M007",
+      "title": "Problem Details, Logging, and OpenAPI",
+      "stage": "stage-02",
+      "status": "completed",
+      "dependencies": [
+        "M006"
+      ],
+      "contract": "milestones/M007-http-contracts.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Problem Details and request correlation Fastify E2E cases passed, including validation, body limit, supplied/invalid request IDs, and production-safe unexpected error response",
+          "Pino redaction configuration and production API docs default covered by configuration and environment tests",
+          "Unit tests passed: 13 tests across 4 suites; Fastify E2E passed: 11 tests across 2 suites, including JSON/YAML/docs routes",
+          "Formatting, lint, strict typecheck, Nest build, OpenAPI generation and 3.1 artifact freshness check passed",
+          "Progress validator and regression tests passed; M008 selected as next milestone"
+        ]
+      }
+    },
+    {
+      "id": "M008",
+      "title": "PostgreSQL and Drizzle Infrastructure",
+      "stage": "stage-03",
+      "status": "completed",
+      "dependencies": [
+        "M007"
+      ],
+      "contract": "milestones/M008-database-infrastructure.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "PostgreSQL 18 Testcontainers integration generated a Drizzle Kit fixture migration into a temporary directory, applied it to a fresh database, and verified table creation and transaction execution",
+          "Lint, formatting, strict typecheck, build, 14 unit tests, 11 Fastify E2E tests, and 1 integration test passed",
+          "Drizzle Kit migration check passed; progress validator and 11 tracking regression cases passed; M009 selected next"
+        ]
+      }
+    },
+    {
+      "id": "M009",
+      "title": "Core Schema, Migrations, and Seeds",
+      "stage": "stage-03",
+      "status": "completed",
+      "dependencies": [
+        "M008"
+      ],
+      "contract": "milestones/M009-core-database-schema.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Fresh PostgreSQL 18 migration from zero passed; all 15 tables created",
+          "Reference/dev seeds repeated idempotently; dev seed production refusal passed",
+          "Composite tenant FK, reserved slug check, rollback and required index introspection passed",
+          "Formatting, lint, strict typecheck, build, 14 unit tests, 11 Fastify E2E tests, 2 PostgreSQL integration tests, Drizzle migration check and 11 progress regressions passed",
+          "Stage 03 exit criteria passed; M010 selected next"
+        ]
+      }
+    },
+    {
+      "id": "M010",
+      "title": "User Credentials and Account Lifecycle",
+      "stage": "stage-04",
+      "status": "completed",
+      "dependencies": [
+        "M009"
+      ],
+      "contract": "milestones/M010-user-account-lifecycle.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Normalized account registration, Argon2id credential storage, single-use verification/reset tokens, recovery enumeration resistance, status enforcement and password confirmation verified against PostgreSQL 18",
+          "Concurrent token issuance limit and password-update compare-and-set behavior verified",
+          "Fastify E2E covers registration projection, duplicate email, recovery response equality, malformed input and invalid verification token",
+          "Format, lint, strict typecheck, 18 unit tests, 15 E2E tests, 7 PostgreSQL integration tests, Nest build and OpenAPI artifact check passed",
+          "Authenticated identity/profile/password-change routes assigned to M011 with approved milestone-boundary resolution",
+          "Progress tracking validation passed; M011 selected next"
+        ]
+      }
+    },
+    {
+      "id": "M011",
+      "title": "JWT Sessions and Refresh Rotation",
+      "stage": "stage-04",
+      "status": "completed",
+      "dependencies": [
+        "M010"
+      ],
+      "contract": "milestones/M011-session-lifecycle.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "EdDSA JWT claim/signature/expiry/key rotation tests; production key validation",
+          "Fastify E2E: 16 tests across 2 suites passed, including login, refresh cookie, authenticated identity and logout revocation",
+          "PostgreSQL integration: 8 tests across 2 suites passed, including concurrent idempotent refresh, late replay revocation/audit, and password-driven session revocation",
+          "Lint, format check, strict typecheck, 22 unit tests, Nest build and OpenAPI generation/freshness check passed"
+        ]
+      }
+    },
+    {
+      "id": "M012",
+      "title": "Permission Model and Authorization Policies",
+      "stage": "stage-05",
+      "status": "completed",
+      "dependencies": [
+        "M011"
+      ],
+      "contract": "milestones/M012-authorization.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Global guard explicitly allows only @Public routes; protected routes reject missing credentials with 401",
+          "Role policy unit tests passed; PostgreSQL integration verified active membership/organization grants, least privilege, suspension, and cross-organization denial",
+          "Fastify E2E passed for public auth flows and anonymous protected-route denial",
+          "Lint, format check, strict typecheck, build, unit tests, integration tests, and E2E tests passed",
+          "Progress validator passed; M013 selected next"
+        ]
+      }
+    },
+    {
+      "id": "M013",
+      "title": "Organization Lifecycle and Ownership",
+      "stage": "stage-05",
+      "status": "completed",
+      "dependencies": [
+        "M012"
+      ],
+      "contract": "milestones/M013-organizations.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Lint, format check, strict typecheck, and Nest build passed",
+          "23 unit tests passed; 18 Fastify E2E tests passed, including PostgreSQL-backed organization create/owner transaction, registration independence, slug normalization/reserved/duplicate handling, cross-organization 404, active-member permission 403, update, suspend, activate, and archive",
+          "8 PostgreSQL integration tests passed",
+          "OpenAPI artifacts regenerated and freshness/validity check passed",
+          "Progress validation passed; M014 selected as next milestone"
+        ]
+      }
+    },
+    {
+      "id": "M014",
+      "title": "Memberships and Invitations",
+      "stage": "stage-05",
+      "status": "completed",
+      "dependencies": [
+        "M013"
+      ],
+      "contract": "milestones/M014-memberships-invitations.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Member and invitation APIs enforce active organization membership, permission grants, actor role authority, and organization-scoped IDs",
+          "Fastify E2E: 18 tests across 2 suites passed, including existing/new account invitation acceptance, revoke/reuse, verified-email proof, role change/removal, last-owner leave rejection, ownership transfer, and organization lifecycle",
+          "Concurrent PostgreSQL-backed member removal and ownership transfer race left exactly one active OWNER",
+          "PostgreSQL integration: 8 tests across 2 suites passed",
+          "Lint, format check, strict typecheck, 23 unit tests, Nest build, OpenAPI generation/freshness, Drizzle migration check, and 11 progress regression tests passed"
+        ]
+      }
+    },
+    {
+      "id": "M015",
+      "title": "Email Delivery and Audit Outbox",
+      "stage": "stage-06",
+      "status": "completed",
+      "dependencies": [
+        "M014"
+      ],
+      "contract": "milestones/M015-email-audit.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Template escaping and authenticated SMTP/TLS tests passed; unit suite: 26 tests",
+          "PostgreSQL integration suite passed: 10 tests including atomic producer persistence during SMTP failure, exclusive concurrent claims, bounded retry and expired-lease handling, session-revocation notice/audit, and audit metadata redaction",
+          "Fastify E2E suite passed: 18 tests",
+          "Lint, Prettier check, strict typecheck, Nest build, Drizzle migration check, and OpenAPI artifact check passed",
+          "M015 email and audit operations documented; M016 selected next"
+        ]
+      }
+    },
+    {
+      "id": "M016",
+      "title": "Tenant-Scoped Example Resources",
+      "stage": "stage-07",
+      "status": "completed",
+      "dependencies": [
+        "M015"
+      ],
+      "contract": "milestones/M016-example-resources.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "31 unit tests passed; 19 Fastify E2E tests passed; 10 PostgreSQL integration tests passed",
+          "Two-organization resource isolation, composite creator FK, member ownership, viewer denial, removed member and inactive organization cases passed",
+          "CRUD and cursor pagination/filtering/sort allowlist/query binding cases passed",
+          "Idempotent replay, payload mismatch rejection, and post-expiry key reuse passed",
+          "Lint, Prettier check, strict typecheck, Nest build, Drizzle migration check, OpenAPI generation/freshness, and 11 progress regressions passed"
+        ]
+      }
+    },
+    {
+      "id": "M017",
+      "title": "Application Security Controls",
+      "stage": "stage-08",
+      "status": "pending",
+      "dependencies": [
+        "M016"
+      ],
+      "contract": "milestones/M017-security-controls.md"
+    },
+    {
+      "id": "M018",
+      "title": "Health and Observability",
+      "stage": "stage-08",
+      "status": "pending",
+      "dependencies": [
+        "M017"
+      ],
+      "contract": "milestones/M018-observability.md"
+    },
+    {
+      "id": "M019",
+      "title": "Production Docker Image",
+      "stage": "stage-09",
+      "status": "pending",
+      "dependencies": [
+        "M018"
+      ],
+      "contract": "milestones/M019-docker-image.md"
+    },
+    {
+      "id": "M020",
+      "title": "Helm and Kubernetes Operations",
+      "stage": "stage-09",
+      "status": "pending",
+      "dependencies": [
+        "M019"
+      ],
+      "contract": "milestones/M020-kubernetes-deployment.md"
+    },
+    {
+      "id": "M021",
+      "title": "CI/CD and Release Safety",
+      "stage": "stage-09",
+      "status": "pending",
+      "dependencies": [
+        "M020"
+      ],
+      "contract": "milestones/M021-cicd.md"
+    },
+    {
+      "id": "M022",
+      "title": "Final Review and Acceptance",
+      "stage": "stage-10",
+      "status": "pending",
+      "dependencies": [
+        "M021"
+      ],
+      "contract": "milestones/M022-final-acceptance.md"
+    }
   ]
 }

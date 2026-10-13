@@ -601,6 +601,202 @@ describe('AppController (Fastify E2E)', () => {
     expect(raceOwners[0]?.count).toBe(1);
   });
 
+  it('enforces resource tenancy, role ownership, cursor validation, and idempotent creation', async () => {
+    const server = app.getHttpAdapter().getInstance();
+    const credentials = async (email: string) => {
+      await server.inject({
+        method: 'POST',
+        url: '/api/v1/auth/register',
+        payload: { email, password: 'correct horse battery staple' },
+      });
+      const login = await server.inject({
+        method: 'POST',
+        url: '/api/v1/auth/login',
+        payload: { email, password: 'correct horse battery staple' },
+      });
+      return {
+        token: `Bearer ${login.json().accessToken as string}`,
+        user: login.json().user as { id: string },
+      };
+    };
+    const owner = await credentials('resource.owner@example.test');
+    const member = await credentials('resource.member@example.test');
+    const other = await credentials('resource.other@example.test');
+    const createOrganization = async (
+      actor: typeof owner,
+      name: string,
+      slug: string,
+    ) => {
+      const response = await server.inject({
+        method: 'POST',
+        url: '/api/v1/organizations',
+        headers: { authorization: actor.token },
+        payload: { name, slug },
+      });
+      return response.json().id as string;
+    };
+    const organizationId = await createOrganization(
+      owner,
+      'Resource Tenant',
+      'resource-tenant',
+    );
+    const otherOrganizationId = await createOrganization(
+      other,
+      'Other Tenant',
+      'other-resource-tenant',
+    );
+    const path = `/api/v1/organizations/${organizationId}/resources`;
+    const key = 'resource-create-once';
+    const created = await server.inject({
+      method: 'POST',
+      url: path,
+      headers: { authorization: owner.token, 'idempotency-key': key },
+      payload: { title: 'Owner resource', description: 'tenant scoped' },
+    });
+    expect(created.statusCode).toBe(201);
+    const replay = await server.inject({
+      method: 'POST',
+      url: path,
+      headers: { authorization: owner.token, 'idempotency-key': key },
+      payload: { title: 'Owner resource', description: 'tenant scoped' },
+    });
+    expect(replay.statusCode).toBe(201);
+    expect(replay.json().id).toBe(created.json().id);
+    const mismatch = await server.inject({
+      method: 'POST',
+      url: path,
+      headers: { authorization: owner.token, 'idempotency-key': key },
+      payload: { title: 'Different resource' },
+    });
+    expect(mismatch.statusCode).toBe(409);
+    await databaseClient`update idempotency_records set expires_at=now() - interval '1 second' where organization_id=${organizationId} and actor_user_id=${owner.user.id} and key=${key}`;
+    const expiredKeyReuse = await server.inject({
+      method: 'POST',
+      url: path,
+      headers: { authorization: owner.token, 'idempotency-key': key },
+      payload: { title: 'Reused after retention' },
+    });
+    expect(expiredKeyReuse.statusCode).toBe(201);
+    expect(expiredKeyReuse.json().id).not.toBe(created.json().id);
+
+    const memberRole =
+      await databaseClient`select id from roles where key='MEMBER'`;
+    const viewerRole =
+      await databaseClient`select id from roles where key='VIEWER'`;
+    const memberRow =
+      await databaseClient`insert into organization_memberships (organization_id,user_id) values (${organizationId},${member.user.id}) returning id`;
+    await databaseClient`insert into membership_roles (membership_id,role_id) values (${memberRow[0]?.id},${memberRole[0]?.id})`;
+    const memberCreated = await server.inject({
+      method: 'POST',
+      url: path,
+      headers: {
+        authorization: member.token,
+        'idempotency-key': 'member-created',
+      },
+      payload: { title: 'Member resource' },
+    });
+    expect(memberCreated.statusCode).toBe(201);
+    const memberCannotUpdateOwner = await server.inject({
+      method: 'PATCH',
+      url: `${path}/${created.json().id as string}`,
+      headers: { authorization: member.token },
+      payload: { title: 'stolen' },
+    });
+    expect(memberCannotUpdateOwner.statusCode).toBe(403);
+    const memberCanUpdateOwn = await server.inject({
+      method: 'PATCH',
+      url: `${path}/${memberCreated.json().id as string}`,
+      headers: { authorization: member.token },
+      payload: { title: 'Member update' },
+    });
+    expect(memberCanUpdateOwn.statusCode).toBe(200);
+
+    await databaseClient`delete from membership_roles where membership_id=${memberRow[0]?.id}`;
+    await databaseClient`insert into membership_roles (membership_id,role_id) values (${memberRow[0]?.id},${viewerRole[0]?.id})`;
+    const viewerCannotDelete = await server.inject({
+      method: 'DELETE',
+      url: `${path}/${memberCreated.json().id as string}`,
+      headers: { authorization: member.token },
+    });
+    expect(viewerCannotDelete.statusCode).toBe(403);
+    const removedMember = await server.inject({
+      method: 'PATCH',
+      url: `${path}/${memberCreated.json().id as string}`,
+      headers: { authorization: owner.token },
+      payload: { title: 'Owner update' },
+    });
+    expect(removedMember.statusCode).toBe(200);
+    await databaseClient`update organization_memberships set status='suspended' where id=${memberRow[0]?.id}`;
+    const removedMemberList = await server.inject({
+      method: 'GET',
+      url: path,
+      headers: { authorization: member.token },
+    });
+    expect(removedMemberList.statusCode).toBe(403);
+
+    const wrongTenant = await server.inject({
+      method: 'GET',
+      url: `/api/v1/organizations/${otherOrganizationId}/resources/${created.json().id as string}`,
+      headers: { authorization: other.token },
+    });
+    expect(wrongTenant.statusCode).toBe(404);
+    const list = await server.inject({
+      method: 'GET',
+      url: `${path}?limit=1&status=active`,
+      headers: { authorization: owner.token },
+    });
+    expect(list.statusCode).toBe(200);
+    expect(list.json().items).toHaveLength(1);
+    expect(list.json().pageInfo.hasNextPage).toBe(true);
+    const nextPage = await server.inject({
+      method: 'GET',
+      url: `${path}?limit=1&status=active&cursor=${encodeURIComponent(list.json().pageInfo.nextCursor as string)}`,
+      headers: { authorization: owner.token },
+    });
+    expect(nextPage.statusCode).toBe(200);
+    expect(nextPage.json().items[0].id).not.toBe(list.json().items[0].id);
+    const mismatchedCursor = await server.inject({
+      method: 'GET',
+      url: `${path}?limit=1&status=archived&cursor=${encodeURIComponent(list.json().pageInfo.nextCursor as string)}`,
+      headers: { authorization: owner.token },
+    });
+    expect(mismatchedCursor.statusCode).toBe(400);
+    const unsupportedSort = await server.inject({
+      method: 'GET',
+      url: `${path}?sort=rawSql`,
+      headers: { authorization: owner.token },
+    });
+    expect(unsupportedSort.statusCode).toBe(400);
+    const ownerDelete = await server.inject({
+      method: 'DELETE',
+      url: `${path}/${memberCreated.json().id as string}`,
+      headers: { authorization: owner.token },
+    });
+    expect(ownerDelete.statusCode).toBe(204);
+    const deletedLookup = await server.inject({
+      method: 'GET',
+      url: `${path}/${memberCreated.json().id as string}`,
+      headers: { authorization: owner.token },
+    });
+    expect(deletedLookup.statusCode).toBe(404);
+    const inactive = await server.inject({
+      method: 'POST',
+      url: `/api/v1/organizations/${organizationId}/suspend`,
+      headers: { authorization: owner.token },
+    });
+    expect(inactive.statusCode).toBe(200);
+    const inactiveWrite = await server.inject({
+      method: 'POST',
+      url: path,
+      headers: {
+        authorization: owner.token,
+        'idempotency-key': 'inactive-create',
+      },
+      payload: { title: 'No write' },
+    });
+    expect(inactiveWrite.statusCode).toBe(403);
+  });
+
   afterAll(async () => {
     await app.close();
     await databaseClient.end({ timeout: 5 });

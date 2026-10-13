@@ -20,7 +20,7 @@ The API binds to `APP_HOST` and `PORT`. The starter route is `GET /api/v1` and r
 
 ## Configuration
 
-Copy `.env.example` to `.env`. At startup, Zod validates application, API docs, database URL, and pool settings. Docs UI is enabled by default outside production and disabled by default in production; set `API_DOCS_ENABLED=true` only when interactive docs are intended to be public. Raw OpenAPI JSON/YAML endpoints remain available for clients and deployment checks. Invalid values stop startup with field names and safe issue messages; configuration values are not included in the error. PostgreSQL variables are read by Compose. The example password and connection URL are local development values only and must never be used for a deployed environment.
+Copy `.env.example` to `.env`. At startup, Zod validates application, API docs, database URL, pool settings, resource cursor signing secret, and idempotency result retention. Keep `RESOURCE_CURSOR_SECRET` stable and identical across replicas; production requires at least 43 characters of random base64url data. `RESOURCE_IDEMPOTENCY_RETENTION_HOURS` defaults to 24 and accepts 1–720 hours. Docs UI is enabled by default outside production and disabled by default in production; set `API_DOCS_ENABLED=true` only when interactive docs are intended to be public. Raw OpenAPI JSON/YAML endpoints remain available for clients and deployment checks. Invalid values stop startup with field names and safe issue messages; configuration values are not included in the error. PostgreSQL variables are read by Compose. The example password, cursor secret, and connection URL are local development values only and must never be used for a deployed environment.
 
 ## Quality commands
 
@@ -35,7 +35,7 @@ pnpm openapi:generate
 pnpm openapi:check
 ```
 
-The E2E smoke test exercises the Nest application through Fastify's injection interface and does not require PostgreSQL. The unit test runner is Jest in native ESM mode. Type checking runs separately from Jest.
+The E2E suite exercises the Nest application through Fastify's injection interface against PostgreSQL 18 Testcontainers and requires Docker. The unit test runner is Jest in native ESM mode. Type checking runs separately from Jest.
 
 `pnpm openapi:generate` builds the application and writes `artifacts/openapi.json` and `artifacts/openapi.yaml`. `pnpm openapi:check` rebuilds the document and fails if the committed artifacts are stale or do not satisfy the OpenAPI 3.1 route/operation checks.
 

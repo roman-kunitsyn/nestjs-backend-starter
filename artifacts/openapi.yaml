@@ -949,6 +949,625 @@ paths:
       security: *a4
       summary: Accept an invitation for the authenticated account
       tags: *a5
+  /api/v1/organizations/{organizationId}/resources:
+    post:
+      operationId: createExampleResource
+      parameters:
+        - name: organizationId
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            maxLength: 200
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                description:
+                  type:
+                    - string
+                    - "null"
+                  maxLength: 10000
+              additionalProperties: false
+      responses:
+        "201":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                  - organizationId
+                  - createdByMembershipId
+                  - title
+                  - description
+                  - status
+                  - createdAt
+                  - updatedAt
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  organizationId:
+                    type: string
+                    format: uuid
+                  createdByMembershipId:
+                    type: string
+                    format: uuid
+                  title:
+                    type: string
+                    maxLength: 200
+                  description:
+                    type:
+                      - string
+                      - "null"
+                  status:
+                    type: string
+                    enum:
+                      - active
+                      - archived
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+        "400":
+          description: Invalid body, organization, or Idempotency-Key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+        "403":
+          description: Resource creation is not permitted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+        "409":
+          description: The idempotency key was used with a different request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security: &a6
+        - bearer: []
+      summary: Create a resource
+      tags: &a7
+        - Example resources
+    get:
+      operationId: listExampleResources
+      parameters:
+        - name: organizationId
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+        - name: q
+          required: false
+          in: query
+          schema:
+            type: string
+            maxLength: 200
+        - name: status
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - active
+              - archived
+        - name: order
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: desc
+        - name: sort
+          required: false
+          in: query
+          schema:
+            type: string
+            enum:
+              - createdAt
+            default: createdAt
+        - name: cursor
+          required: false
+          in: query
+          schema:
+            type: string
+            maxLength: 2048
+        - name: limit
+          required: false
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                  - pageInfo
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - id
+                        - organizationId
+                        - createdByMembershipId
+                        - title
+                        - description
+                        - status
+                        - createdAt
+                        - updatedAt
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        organizationId:
+                          type: string
+                          format: uuid
+                        createdByMembershipId:
+                          type: string
+                          format: uuid
+                        title:
+                          type: string
+                          maxLength: 200
+                        description:
+                          type:
+                            - string
+                            - "null"
+                        status:
+                          type: string
+                          enum:
+                            - active
+                            - archived
+                        createdAt:
+                          type: string
+                          format: date-time
+                        updatedAt:
+                          type: string
+                          format: date-time
+                  pageInfo:
+                    type: object
+                    required:
+                      - hasNextPage
+                      - nextCursor
+                    properties:
+                      hasNextPage:
+                        type: boolean
+                      nextCursor:
+                        type:
+                          - string
+                          - "null"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+        "400":
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+        "403":
+          description: The active organization role cannot perform this action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+        "404":
+          description: The resource does not exist in this organization.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security: *a6
+      summary: List tenant resources
+      tags: *a7
+  /api/v1/organizations/{organizationId}/resources/{resourceId}:
+    get:
+      operationId: getExampleResource
+      parameters:
+        - name: organizationId
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+        - name: resourceId
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                  - organizationId
+                  - createdByMembershipId
+                  - title
+                  - description
+                  - status
+                  - createdAt
+                  - updatedAt
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  organizationId:
+                    type: string
+                    format: uuid
+                  createdByMembershipId:
+                    type: string
+                    format: uuid
+                  title:
+                    type: string
+                    maxLength: 200
+                  description:
+                    type:
+                      - string
+                      - "null"
+                  status:
+                    type: string
+                    enum:
+                      - active
+                      - archived
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+        "400":
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+        "403":
+          description: The active organization role cannot perform this action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+        "404":
+          description: The resource does not exist in this organization.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security: *a6
+      summary: Get a tenant resource
+      tags: *a7
+    patch:
+      operationId: updateExampleResource
+      parameters:
+        - name: organizationId
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+        - name: resourceId
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              properties:
+                title:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                description:
+                  type:
+                    - string
+                    - "null"
+                  maxLength: 10000
+                status:
+                  type: string
+                  enum:
+                    - active
+                    - archived
+              additionalProperties: false
+      responses:
+        "200":
+          description: ""
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - id
+                  - organizationId
+                  - createdByMembershipId
+                  - title
+                  - description
+                  - status
+                  - createdAt
+                  - updatedAt
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  organizationId:
+                    type: string
+                    format: uuid
+                  createdByMembershipId:
+                    type: string
+                    format: uuid
+                  title:
+                    type: string
+                    maxLength: 200
+                  description:
+                    type:
+                      - string
+                      - "null"
+                  status:
+                    type: string
+                    enum:
+                      - active
+                      - archived
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+        "400":
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+        "403":
+          description: The active organization role cannot perform this action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+        "404":
+          description: The resource does not exist in this organization.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security: *a6
+      summary: Update a tenant resource
+      tags: *a7
+    delete:
+      operationId: deleteExampleResource
+      parameters:
+        - name: organizationId
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+        - name: resourceId
+          required: true
+          in: path
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: ""
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+        "400":
+          description: Invalid request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+        "401":
+          description: Authentication is required.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+        "403":
+          description: The active organization role cannot perform this action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+        "404":
+          description: The resource does not exist in this organization.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+          headers:
+            X-Request-ID:
+              description: Request correlation identifier.
+              schema:
+                type: string
+      security: *a6
+      summary: Delete a tenant resource
+      tags: *a7
 info:
   title: NestJS Backend Starter API
   description: REST API contract for the NestJS backend starter.

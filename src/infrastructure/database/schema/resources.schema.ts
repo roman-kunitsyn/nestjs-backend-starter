@@ -99,6 +99,44 @@ export const exampleResources = pgTable(
   ],
 );
 
+export const idempotencyRecords = pgTable(
+  'idempotency_records',
+  {
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organizations.id, { onDelete: 'cascade' }),
+    actorUserId: uuid('actor_user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    key: varchar('key', { length: 200 }).notNull(),
+    requestFingerprint: varchar('request_fingerprint', {
+      length: 64,
+    }).notNull(),
+    responseStatus: integer('response_status').notNull(),
+    responseBody: jsonb('response_body').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+      .notNull()
+      .defaultNow(),
+    expiresAt: timestamp('expires_at', {
+      withTimezone: true,
+      mode: 'date',
+    }).notNull(),
+  },
+  (table) => [
+    uniqueIndex('idempotency_records_scope_key_uq').on(
+      table.organizationId,
+      table.actorUserId,
+      table.key,
+    ),
+    index('idempotency_records_expiry_idx').on(table.expiresAt),
+    check('idempotency_records_key_ck', sql`length("key") > 0`),
+    check(
+      'idempotency_records_response_status_ck',
+      sql`response_status BETWEEN 200 AND 299`,
+    ),
+  ],
+);
+
 export const emailOutbox = pgTable(
   'email_outbox',
   {
