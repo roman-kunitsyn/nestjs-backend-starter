@@ -433,6 +433,8 @@ Progress data must be validated before staging.
 
 ## 8. Next-Milestone Selection
 
+Before any editing, confirm the human-selected short-lived branch, current worktree, milestone and dependency state. Branch preparation, pull requests, human integration, and interrupted-branch recovery follow [Git workflow](docs/operations/git-workflow.md). Do not assume milestone completion means its branch has been merged.
+
 When the user says:
 
 `implement next milestone`
@@ -1113,6 +1115,8 @@ Respond that:
 - Additional work requires a new approved scope or roadmap.
 
 A completed project remains completed unless a new scope is explicitly authorized.
+
+Post-completion maintenance requires an explicit task authorization and a short-lived maintenance branch. Follow [Git workflow](docs/operations/git-workflow.md) and [manual verification](docs/operations/manual-verification.md). Do not add an implementation milestone to record maintenance or change completed progress evidence. Humans control commits, pushes, PR review, merge, tags, and releases.
 
 ---
 

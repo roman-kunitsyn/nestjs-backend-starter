@@ -4,13 +4,13 @@ This directory is the project's persistent technical and implementation record. 
 
 ## Documentation map
 
-| Directory or file | Purpose |
-| --- | --- |
-| [reference/](reference/) | Preserved source specifications and historical references. |
-| [architecture/](architecture/overview.md) | Focused technical architecture documents, decomposed during Stage 00. |
-| [decisions/](decisions/README.md) | Accepted architecture decision records (ADRs). |
-| [implementation/](implementation/README.md) | Roadmap, requirements traceability, milestone contracts, and progress. |
-| [operations/](operations/) | Development, testing, migration, deployment, and troubleshooting procedures. |
+| Directory or file                           | Purpose                                                                      |
+| ------------------------------------------- | ---------------------------------------------------------------------------- |
+| [reference/](reference/)                    | Preserved source specifications and historical references.                   |
+| [architecture/](architecture/overview.md)   | Focused technical architecture documents, decomposed during Stage 00.        |
+| [decisions/](decisions/README.md)           | Accepted architecture decision records (ADRs).                               |
+| [implementation/](implementation/README.md) | Roadmap, requirements traceability, milestone contracts, and progress.       |
+| [operations/](operations/)                  | Development, testing, migration, deployment, and troubleshooting procedures. |
 
 Account endpoint behavior and current lifecycle limitations are documented in [authentication operations](operations/authentication.md).
 
@@ -24,6 +24,8 @@ Helm deployment and cluster operations are in [Kubernetes operations](operations
 
 GitHub procedures are split into [CI and workflow troubleshooting](operations/github-actions.md), [versioned releases and GHCR verification](operations/releases.md), and [GitHub environments and repository protection](operations/github-governance.md).
 
+For repository adoption, independent history, and fresh Stage 00 planning, see [Template adoption](operations/template-adoption.md). Human-controlled branching and pull request integration are in [Git workflow](operations/git-workflow.md). Event-based operational checks are in [Manual verification](operations/manual-verification.md). Public contract artifacts and consumer-generated clients are described in [OpenAPI artifacts](operations/api-artifacts.md) and [Frontend integration](operations/frontend-integration.md).
+
 Cluster deployment and application rollback commands are in [Kubernetes operations](operations/kubernetes.md#deployment-and-application-rollback-quick-procedure); migration verification and database restore guidance are in [Database migrations](operations/migrations.md#backup-restore-verification-and-troubleshooting).
 
 ## Conventions
@@ -35,3 +37,7 @@ Cluster deployment and application rollback commands are in [Kubernetes operatio
 - Update navigation when adding an authoritative document.
 
 The original architecture source is [nestjs-backend-starter-architecture-2026.md](reference/nestjs-backend-starter-architecture-2026.md). The architecture documents preserve its substantive requirements and link back to its section structure. The source remains unchanged as a historical record.
+
+When this repository is adopted, the original implementation tree remains starter history. See the adoption guide for the historical index and distinct active planning procedure; do not treat the completed starter tracker as an adopter's progress.
+
+The non-destructive [starter history index](reference/starter-history/README.md) locates the terminal M000–M022 evidence without moving files referenced by validators or existing documentation.

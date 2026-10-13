@@ -6,6 +6,15 @@ A modular, secure, and extensible foundation for building REST APIs for SaaS pla
 
 > **Project status:** The approved implementation roadmap and final template acceptance are complete. Local quality, PostgreSQL, Docker, Helm, and disposable Kubernetes checks passed; [hosted CI and release evidence](docs/implementation/milestones/M021-cicd.md) is recorded in M021. This is reusable-template evidence; adopters must still configure and verify their own production infrastructure, secrets, TLS/DNS, managed database recovery, and deployment policies.
 
+## Start here
+
+- [Adopt this template as a new application](docs/operations/template-adoption.md) with independent Git history and fresh active planning.
+- [Use the developer-agent and milestone workflow](AGENTS.md); `implement next milestone` returns terminal completion in this starter.
+- [Git branches, pull requests, recovery, and human integration](docs/operations/git-workflow.md).
+- [Manual verification by lifecycle event](docs/operations/manual-verification.md).
+- [Generate OpenAPI contracts and frontend TypeScript clients](docs/operations/api-artifacts.md) and [React/Vite integration example](docs/operations/frontend-integration.md).
+- [Publish and verify releases](docs/operations/releases.md).
+
 ## Overview
 
 `nestjs-backend-starter` provides the infrastructure and architectural conventions needed to start implementing business logic without repeatedly rebuilding authentication, authorization, database access, multi-tenancy, API validation, security, logging, testing, and deployment pipelines.
