@@ -6,44 +6,52 @@
 
 ## Objective
 
-Review and validate the complete implementation against every approved requirement and resolve release-blocking defects without expanding product scope.
+Review the complete reusable starter against approved requirements and resolve release-blocking defects without expanding product scope.
 
 ## Scope
 
-- Architecture consistency and maintainability review; auth, security, tenant isolation, DB/schema/migrations, API/OpenAPI, email/outbox, logging/health, container, Kubernetes and CI/CD verification.
-- Full automated suites and coverage gates; actual production-like staging rollout and managed PostgreSQL backup/PITR restore evidence; documentation/README and requirements matrix reconciliation.
-- Fix defects discovered during validation, record any non-blocking limitation and obtain required approval for any acceptance exception.
+- Architecture consistency and maintainability review; auth, security, tenant isolation, DB/schema/migrations, API/OpenAPI, email/outbox, logging/health, container, Kubernetes, CI/CD, and operations verification.
+- Full required automated suites and security checks.
+- Integrated deployment and recovery verification in a fresh disposable kind or k3d cluster and fresh disposable PostgreSQL instance containing synthetic data only.
+- Documentation, README, requirements traceability, and progress consistency review.
+- Fix defects found during acceptance; record non-blocking limitations and any approved exception.
 
 ## Out of scope
 
 - New major features or speculative architecture changes.
-- Claiming deployment, backup restoration, or infrastructure success without executing it.
+- Selecting a cloud provider, provisioning/purchasing managed infrastructure, configuring real cloud credentials, or deploying to live staging/production.
+- Managed PostgreSQL PITR, production TLS/DNS, provider-specific infrastructure hardening, and production disaster recovery exercises. Document these as adopter deployment responsibilities.
+- Claiming deployment, backup restoration, or infrastructure success without executing the corresponding local verification.
 
 ## Architecture references
 
-- [Global definition of done](../definition-of-done.md), [requirements matrix](../requirements-matrix.md), all architecture documents and `AGENTS.md` §17.
+- [Global definition of done](../definition-of-done.md), [requirements matrix](../requirements-matrix.md), [ADR-002](../../decisions/ADR-002-template-versus-production-verification.md), all architecture documents, and `AGENTS.md` §17.
 
 ## CI/CD and deployment evidence boundary
 
-M021 verifies GitHub Actions CI execution, tagged GHCR publication and artifact evidence, GitHub environment/protection configuration, and release/deployment workflow safety. M022 verifies the outcome in an actual production-like staging environment; local kind/k3d checks or M021 workflow configuration do not substitute for that evidence. Managed PostgreSQL backup/PITR recovery also remains an M022 gate under [ADR-002](../../decisions/ADR-002-template-versus-production-verification.md).
+M021 verifies GitHub CI/CD, versioned GHCR publication, immutable artifact identity, SBOM/provenance and security checks, repository rulesets, staging/production environment governance, and deployment workflow safety. M022 uses a fresh local cluster and PostgreSQL instance to validate the integrated Helm, migration, health, smoke, rollback, backup/restore, and security behavior. Local results are template-level evidence and do not represent a cloud deployment or managed-service recovery test. Real credentials, kubeconfig/workload identity, external Helm values, DNS, public/runner-reachable smoke endpoints, managed PostgreSQL PITR, and production disaster recovery are adopter deployment responsibilities under [ADR-002](../../decisions/ADR-002-template-versus-production-verification.md).
 
 ## Deliverables
 
-- Final verification record, reconciled docs/matrix, completed progress state, and project acceptance report.
+- Final verification record, reconciled documentation and traceability, completed progress state, and project acceptance report.
 
 ## Acceptance criteria
 
-- [ ] Every approved milestone/stage is completed; dependency, progress, and Git handoffs are consistent.
-- [ ] Every traceability matrix requirement has evidence; all mandatory quality/security/tenant checks pass.
+- [ ] Every approved milestone and stage exit criterion is complete; dependency, progress, and Git handoffs are consistent.
+- [ ] Every traceability requirement has evidence; required quality, security, and tenant-isolation checks pass.
 - [ ] No release-blocking defects remain; unresolved issues and impact are documented.
-- [ ] Actual production-like staging deployment is evidenced, including external secret delivery, TLS, migration behavior, healthy rollout/probes, smoke checks, and image rollback; no local kind/k3d result is represented as production evidence.
-- [ ] Managed PostgreSQL backup/PITR restore rehearsal is evidenced with recovery point, observed RPO/RTO, schema/migration validation, application smoke result, and operator. M020 isolated PostgreSQL restore checks do not satisfy this criterion.
-- [ ] Public API/OpenAPI match runtime; docs and README describe actual behavior.
-- [ ] Project is set to completed only after all evidence is recorded; final report includes completion summary.
+- [ ] A fresh disposable kind/k3d cluster and PostgreSQL instance are provisioned for this acceptance run with synthetic data and temporary credentials only.
+- [ ] Helm install and upgrade succeed; migration hook ordering and migration state are verified.
+- [ ] Startup, readiness, and liveness probes behave as specified; local smoke checks pass using a cluster-local path or port-forward, without public DNS.
+- [ ] Application rollback to a schema-compatible image succeeds without automatic schema rollback.
+- [ ] Database backup and restore into an isolated fresh database succeeds; synthetic data markers, migration state, and application readiness/smoke behavior are verified.
+- [ ] Kubernetes security controls are checked, including pod security context, service account/token behavior, and applicable NetworkPolicy allow/deny behavior.
+- [ ] API/OpenAPI match runtime; architecture, operations, README, and consumer deployment instructions describe actual behavior and have no contradictory M021/M022 scope.
+- [ ] Progress validator and all applicable final checks pass; project is set to completed only after all evidence is recorded.
 
 ## Verification
 
-Run all required lint/format/typecheck/unit/integration/E2E/contract/build/Helm/security/staging/restore checks applicable to the complete system; audit all evidence and progress graph.
+Run all applicable lint/format/typecheck/unit/integration/E2E/contract/build/Helm/security checks and the integrated disposable-cluster/database acceptance procedure. Audit evidence and the progress graph. Do not count unavailable checks as passed. Record local-only scope and any infrastructure capability that could not be verified.
 
 ## Completion checklist
 

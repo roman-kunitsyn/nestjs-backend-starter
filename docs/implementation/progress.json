@@ -507,12 +507,12 @@
       "completion": {
         "date": "2026-10-13",
         "verification": [
-          "ADR-002 approved and applied across M020/M022 contracts, Stage 09, architecture, operations, and requirements traceability; real staging and managed PITR remain M022 gates",
+          "ADR-002 applied across M020/M021/M022 contracts, Stage 09/10, architecture, operations, definition of done, and requirements traceability; M022 requires fresh disposable local infrastructure, while real staging and managed PITR are consumer responsibilities",
           "Helm lint/template passed for chart 0.2.1; live kind v1.37 install and rollout verified migration hook ordering, 2/2 readiness, maxSurge=1/maxUnavailable=0, HPA 2–10 at 70%, PDB minAvailable=1, probes, TLS Ingress, external Secret reference, and operational endpoint exclusion",
           "Deliberate bad DB password failed pre-upgrade Job with PostgreSQL 28P01 and preserved the healthy release; compatible-image upgrade and rollback passed, final revision 3 converged to two ready pods on the prior image",
           "Calico v3.33 kind cluster enforced corrected NetworkPolicy: ingress from selected ingress namespace and app-to-selected DB allowed; untrusted namespace ingress and default SMTP egress denied; app pod verified UID 1000, zero capabilities, read-only root, RuntimeDefault seccomp, and no service-account token",
           "Isolated PostgreSQL 18.6 custom-format dump/restore took 381 ms; marker synthetic-m020-final-restore and four Drizzle migration records survived, and app readiness against restored data returned 200",
-          "pnpm image:build, Helm lint/template, progress validation and regression checks passed; dynamic CPU scaling not run (metrics-server unavailable); managed-service PITR and actual staging deployment remain unverified M022 gates"
+          "pnpm image:build, Helm lint/template, progress validation and regression checks passed; dynamic CPU scaling not run (metrics-server unavailable); managed-service PITR and actual staging deployment were not run and are not template completion gates"
         ]
       }
     },
@@ -525,7 +525,7 @@
         "M020"
       ],
       "contract": "milestones/M021-cicd.md",
-      "blocker": "Reverified 2026-10-13 using GitHub Actions, ruleset/environment APIs, and GHCR. Standalone CI run 38359105430 and release run 38359664805 passed on commit 460e3e0581e3afd43ad644caef383c9696a32522. Tag v0.0.1 published ghcr.io/roman-kunitsyn/nestjs-backend-starter at sha256:6f87cc59a9aa6ca69ab05fa6599887263d95b31c6a614ef89a036dffc178bf16; the digest resolves and has SPDX SBOM and SLSA provenance predicates. Dependency and exact-digest Trivy gates passed. Active main ruleset 24975194 requires PRs and Quality and image gates; active release-tag ruleset 24975901 prevents v* tag updates/deletion. Staging and production environments exist, but both have no protection rules, deployment branch policy, variables, or secrets; GitHub reports admins can bypass. Configure environment-scoped settings and credentials, production reviewers and allowed release refs, then reverify. Keep M021 blocked until these controls pass. Actual staging deployment and managed database recovery remain M022 gates under ADR-002."
+      "blocker": "Reverified 2026-10-13 using GitHub Actions, ruleset/environment APIs, and GHCR. Standalone CI run 38359105430 and release run 38359664805 passed on commit 460e3e0581e3afd43ad644caef383c9696a32522. Tag v0.0.1 published ghcr.io/roman-kunitsyn/nestjs-backend-starter at sha256:6f87cc59a9aa6ca69ab05fa6599887263d95b31c6a614ef89a036dffc178bf16; the digest resolves and has SPDX SBOM and SLSA provenance predicates. Dependency and exact-digest Trivy gates passed. Active main ruleset 24975194 requires PRs and Quality and image gates; active release-tag ruleset 24975901 prevents v* tag updates/deletion. Staging and production environments exist, but both have no protection rules or deployment branch policy; GitHub reports admins can bypass. Distinct environment governance, production reviewers, approved deployment ref restrictions, and admin bypass behavior remain absent or unverified; configure and reinspect those controls to resume M021. Environment secrets/variables, real credentials, clusters, kubeconfig, external values, DNS, and smoke endpoints are consumer deployment-time inputs and are not M021 gates. M022 performs local integrated verification; actual staging and managed database recovery are not template completion gates under amended ADR-002."
     },
     {
       "id": "M022",

@@ -4,7 +4,7 @@
 
 - Repository administrator access to `roman-kunitsyn/nestjs-backend-starter`.
 - `gh` authenticated with sufficient read access to inspect rulesets and Actions; repository admin permissions are required to change them.
-- Environment-specific Kubernetes clusters, namespaces, external Secrets, smoke endpoints, and identity integration prepared before enabling deployments.
+- A consumer's staging/production clusters, credentials, external Secrets, smoke endpoints, and identity integration are needed only when that consumer enables live deployments; they are not prerequisites for template completion.
 
 Check the current default branch and rulesets:
 
@@ -19,19 +19,32 @@ Expected: the active main branch ruleset targets the default branch and requires
 
 ## Configure GitHub environments
 
-In **Settings → Environments**, create separate `staging` and `production` environments. The workflow `.github/workflows/deploy.yml` references those exact environment names and reads:
+In **Settings → Environments**, create separate `staging` and `production` environments. M021 verifies environment governance and separation. A consumer enables live deployment by supplying the following exact inputs for each environment to `.github/workflows/deploy.yml`:
 
 | Name                | Type              | Purpose                                                                                                                                                                   |
 | ------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `KUBECONFIG`        | Secret            | Environment-limited cluster credential for the workflow's provider-neutral configuration. Prefer cloud OIDC/workload identity and short-lived credentials when supported. |
-| `HELM_VALUES_YAML`  | Secret            | Environment-specific Helm values and external Secret reference; never include raw application/database credentials.                                                       |
-| `SMOKE_URL`         | Variable          | Runner-reachable smoke endpoint that returns HTTP 2xx.                                                                                                                    |
+| `KUBECONFIG`        | Secret            | Environment-limited cluster credential for the workflow's provider-neutral configuration. For OIDC/workload identity, adapt the credential setup step to the provider's supported action and exchange the GitHub identity for short-lived credentials. |
+| `HELM_VALUES_YAML`  | Secret            | Environment-specific Helm values and external Secret reference; never include raw application/database credentials. The values must select the intended namespace and immutable image settings are supplied by the workflow. |
+| `SMOKE_URL`         | Variable          | Runner-reachable application smoke endpoint that returns HTTP 2xx. It may use a private network path; public DNS/reachability is not required by template acceptance. |
 | `KUBE_NAMESPACE`    | Optional variable | Dedicated namespace; defaults to `staging` or `production`.                                                                                                               |
 | `HELM_RELEASE_NAME` | Optional variable | Helm release identity; defaults to `nestjs-backend-starter`.                                                                                                              |
 
-Use unique cluster identities, namespaces, external Secret names, database credentials, and smoke endpoints for staging and production. In the production environment, set required reviewers and restrict allowed deployment branches/tags to the approved release refs. Keep staging independently scoped. Avoid broad environment sharing or credentials at repository scope.
+Use unique cluster identities, namespaces, external Secret names, database credentials, and smoke endpoints for staging and production. In the production environment, set required reviewers and restrict allowed deployment branches/tags to the approved release refs. Keep staging independently scoped. Avoid broad environment sharing or credentials at repository scope. These secret and variable values, clusters, DNS, certificates, databases, and network paths are consumer deployment-time inputs. Do not create dummy values or require them for M021/M022.
 
-Expected: the deploy job waits for production approval before receiving environment secrets; a staging dispatch cannot read production credentials. A workflow job declaring `environment: production` does not by itself prove the environment has reviewers, branch restrictions, or configured values.
+Expected: the deploy job waits for production approval before receiving environment secrets; a staging dispatch cannot read production credentials. A workflow job declaring `environment: production` does not by itself prove the environment has reviewers, branch restrictions, or configured values. M021 verifies the governance protections and workflow references without requiring these deployment inputs to be populated.
+
+## Consumer deployment setup and verification
+
+These steps apply when an adopting application enables live deployment. They are not prerequisites for M021/M022 completion.
+
+1. Provision separate staging and production Kubernetes environments, namespaces, databases, ingress/TLS, and externally managed application Secrets. Use a private DNS name or approved network route appropriate to the environment; keep metrics and operational health routes private.
+2. Configure `KUBECONFIG` as an environment secret containing only that environment's limited deployment identity. Prefer provider-supported GitHub OIDC/workload identity with short-lived credentials. For OIDC, adapt the workflow credential setup to the provider action and verify the resulting identity can only deploy to its intended cluster/namespace. Never store long-lived cloud keys in the workflow or repository.
+3. Configure `HELM_VALUES_YAML` as an environment secret containing reviewed chart configuration and a reference to the already-created external Kubernetes Secret. Include environment-specific hostname/TLS Secret reference, trusted proxy and CORS settings, resource/pool budgets, and narrow database/SMTP network policy targets as applicable. Do not put raw database, JWT, SMTP, kubeconfig, or cloud credentials in the YAML.
+4. Configure `SMOKE_URL` as an environment variable for an application route that returns HTTP 2xx from the runner network. For a private service, provide an approved runner network path; public reachability is optional. Do not expose operational endpoints to make smoke checks reachable.
+5. Optionally set `KUBE_NAMESPACE` and `HELM_RELEASE_NAME`; otherwise the workflow uses its documented defaults. Keep values distinct between staging and production.
+6. Inspect the configured secret/variable names without revealing secret values. Confirm the kubeconfig or OIDC identity selects the intended cluster, the Helm values reference the intended namespace and external Secret, and DNS/TLS resolve for that deployment. From the same network path as the workflow, confirm the smoke URL returns 2xx. Then dispatch a reviewed image by version, full source commit SHA, and exact `sha256:` digest, and verify migration Job completion, rollout readiness, image digest, smoke result, and deployment record.
+
+If a consumer does not configure these inputs, the deployment workflow is intentionally not dispatchable for that environment. This does not prevent local Helm acceptance in M022, where temporary synthetic Secrets, local TLS fixtures where needed, and cluster-local or port-forward smoke checks are used.
 
 ## Inspect settings
 
@@ -49,7 +62,7 @@ Before allowing a production dispatch, inspect `.github/workflows/deploy.yml` an
 4. Uses the immutable GHCR digest in Helm values, waits for the migration hook and rollout, checks the migration Job, and runs a 2xx smoke check.
 5. Records source and workflow commits, version, digest, migration Job, Helm revision, readiness, and smoke result.
 
-Do not use an actual staging deployment as M021 evidence; M022 owns environment-specific deployment and recovery verification. See [Kubernetes operations](kubernetes.md) and [Database migrations](migrations.md) for deployment, rollback, and database recovery procedures.
+Do not use an actual staging deployment as M021 evidence. M022 verifies integrated behavior in a fresh local cluster and database; live environment-specific deployment and recovery are consumer responsibilities. See [Kubernetes operations](kubernetes.md) and [Database migrations](migrations.md) for exact deployment, rollback, and database recovery procedures.
 
 ## Troubleshooting
 
@@ -62,10 +75,10 @@ Do not use an actual staging deployment as M021 evidence; M022 owns environment-
 
 ## Manual verification record
 
-Record the date, operator, ruleset names/IDs and active conditions, required check name, production reviewers and deployment ref restrictions, and confirmation that expected secret/variable names exist without recording values. If any setting cannot be inspected, document it as unverified and keep M021 blocked.
+Record the date, operator, ruleset names/IDs and active conditions, required check name, production reviewers and deployment ref restrictions. Record the presence of consumer secret/variable names only when a consumer has configured them; their absence does not block template acceptance. If a required governance setting cannot be inspected, document it as unverified and keep M021 blocked.
 
 ### Repository audit on 2026-10-13
 
 Read-only GitHub API inspection found active ruleset `main-branch-protection` (ID `24975194`) targeting the default branch. It requires pull requests, blocks deletion and non-fast-forward updates, and requires `Quality and image gates`. Active ruleset `release-tag-protection` (ID `24975901`) targets `refs/tags/v*` and blocks update/deletion. No bypass actors were configured for either ruleset. The main ruleset has zero required approving reviews; the M021 contract requires the status check and protection rules, not a minimum review count.
 
-The `staging` and `production` environments exist, but both currently report empty `protection_rules`, a null deployment branch policy, and no environment variables or secret names. GitHub reports `can_admins_bypass: true`. Therefore production reviewers/ref restrictions, `KUBECONFIG`, `HELM_VALUES_YAML`, `SMOKE_URL`, and environment separation are not configured or verified. This is a failed M021 acceptance criterion; configure and reinspect these settings before changing M021 to completed. Secret values were not retrieved.
+The `staging` and `production` environments exist, but both currently report empty `protection_rules` and a null deployment branch policy. GitHub reports `can_admins_bypass: true`. Production reviewers/ref restrictions and the intended environment governance are not configured or verified; this remains a failed M021 acceptance criterion. The absence of `KUBECONFIG`, `HELM_VALUES_YAML`, and `SMOKE_URL` is not a template acceptance failure because these are consumer deployment-time inputs. Secret values were not retrieved.

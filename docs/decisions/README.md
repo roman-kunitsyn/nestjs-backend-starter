@@ -5,4 +5,4 @@ Accepted architecture decisions are recorded here as `ADR-NNN-title.md` files. E
 ## Accepted decisions
 
 - [ADR-001 — PostgreSQL driver](ADR-001-postgres-js-driver.md): use the `postgres.js` driver with Drizzle, following the source's explicit technology selection.
-- [ADR-002 — Separate template verification from production deployment evidence](ADR-002-template-versus-production-verification.md): M020 verifies reusable deployment and recovery behavior with local ephemeral infrastructure; M021 verifies GitHub CI/release/environment configuration and workflow safety; M022 retains actual staging and managed PostgreSQL recovery as project-completion gates.
+- [ADR-002 — Separate template verification from consumer deployment evidence](ADR-002-template-versus-production-verification.md): M020 and M022 verify the reusable chart and recovery behavior with disposable local infrastructure; M021 verifies GitHub CI, GHCR artifacts, security checks, repository rulesets, environment governance, and workflow safety. Live cloud infrastructure and provider-specific recovery are adopter responsibilities.

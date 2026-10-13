@@ -30,7 +30,7 @@ M008 establishes tooling and connection lifecycle; M009 introduces core tables a
 - `DATABASE_URL` supplied by the approved secret manager or shell environment. Do not print credentials or put them in command history.
 - A reviewed backup identifier and permission to restore into an isolated database. Never overwrite production during a rehearsal.
 
-For a custom-format dump, use the provider's documented point-in-time restore into a new isolated database first. For a local or self-managed PostgreSQL target, the sequence is:
+For a managed-provider restore, use that provider's documented PITR procedure in an adopting environment. Managed PITR is a consumer responsibility. For template verification against a local or self-managed disposable PostgreSQL target, the sequence is:
 
 ```bash
 pg_dump --format=custom --no-owner --dbname="$DATABASE_URL" --file=./recovery-check.dump
@@ -69,4 +69,4 @@ Expected: the newest migration Job completes successfully and logs contain no SQ
 - Kubernetes migration Job fails: inspect its description and logs, confirm the `DATABASE_URL` Secret reference and database reachability, then inspect journal state before retrying deployment.
 - Restore fails: confirm dump format, PostgreSQL major-version compatibility, available storage, and that the destination database is empty and isolated. Preserve the source backup; do not retry into a live database.
 
-Manually verify restore completion, expected migration count, synthetic marker/data checks, application readiness against the restored database, and recorded restore timing. M022 requires actual managed-service PITR evidence; a local dump/restore rehearsal does not substitute for it. See [Kubernetes deployment and rollback](kubernetes.md#deployment-and-application-rollback-quick-procedure).
+Manually verify restore completion, expected migration count, synthetic marker/data checks, application readiness against the restored database, and recorded restore timing. M020 and M022 use disposable PostgreSQL restore checks to verify the reusable procedure. They do not establish managed-service PITR or production disaster recovery. See [Kubernetes deployment and rollback](kubernetes.md#deployment-and-application-rollback-quick-procedure).
