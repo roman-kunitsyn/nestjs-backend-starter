@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Quality and image gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.11.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Formatting
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: PostgreSQL integration tests
+        run: pnpm test:integration
+
+      - name: Fastify end-to-end tests
+        run: pnpm test:e2e
+
+      - name: Migration consistency
+        run: pnpm db:check
+
+      - name: OpenAPI contract
+        run: pnpm openapi:check
+
+      - name: Production build
+        run: pnpm build
+
+      - name: Helm chart lint
+        uses: azure/setup-helm@v4
+
+      - name: Lint Helm chart
+        run: pnpm helm:lint
+
+      - name: Production dependency audit
+        run: pnpm security:audit
+
+      - name: Build production image
+        run: pnpm image:build
+
+      - name: Scan production image
+        uses: aquasecurity/trivy-action@0.36.0
+        with:
+          image-ref: nestjs-backend-starter:local
+          format: table
+          ignore-unfixed: true
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+          exit-code: '1'

@@ -816,7 +816,7 @@ helm upgrade --install nestjs-backend-starter \
   -f ./helm/nestjs-backend-starter/values.yaml
 ```
 
-This command assumes the cluster, ingress controller, container registry access, externally managed Secret, database, and required migrations have been provisioned. Review [Kubernetes operations](docs/operations/kubernetes.md) and create environment-specific values with an immutable image digest before deployment. The chart is under implementation and this command is not deployment evidence.
+This command assumes the cluster, ingress controller, container registry access, externally managed Secret, database, and required migrations have been provisioned. Review [Kubernetes operations](docs/operations/kubernetes.md) and create environment-specific values with an immutable image digest before deployment. It is a manual example; it does not record a pipeline deployment.
 
 ### Deploy to production
 
@@ -878,9 +878,15 @@ Pull requests must pass:
 - Helm validation.
 - Dependency and container security checks.
 
+The PR workflow is `.github/workflows/ci.yml`. It also supports workflow reuse by the tagged release pipeline. PostgreSQL integration and E2E tests use Testcontainers on the GitHub-hosted Docker runner.
+
 ### Continuous deployment
 
-Releases use immutable images and controlled Kubernetes deployments.
+`.github/workflows/release.yml` runs on `vMAJOR.MINOR.PATCH` tags after the same CI gates pass. The tag must match `package.json`. It publishes a version tag and commit SHA tag to GHCR, attaches BuildKit SBOM/provenance metadata, scans the published digest, and records the source commit and digest in the workflow summary. Always deploy the digest recorded by that run.
+
+`.github/workflows/deploy.yml` is manually dispatched with a version, SHA-256 image digest, and full source commit SHA from the release summary. Configure separate GitHub `staging` and `production` environments with `KUBECONFIG`, `HELM_VALUES_YAML`, and `SMOKE_URL` secrets/variables. Configure required reviewers on the `production` environment; the workflow references that environment so its protection rules run before credentials are available. Set different namespaces, cluster identities, external secret names, and database credentials for each environment. Use provider OIDC/workload identity to obtain short-lived cluster credentials where supported; the generic workflow accepts a kubeconfig secret for clusters without that integration. Limit production package and environment access to release operators.
+
+The deploy workflow has a non-cancelling concurrency lock per environment. Helm waits for its pre-upgrade migration hook and application rollout, then the workflow verifies the labeled migration Job and calls the configured smoke URL. It stores the exact commit, version, digest, Helm revision, migration Job, ready replica count, and smoke result in a 90-day workflow artifact and run summary. It does not perform automatic rollback or reverse migrations. To recover, inspect the failed migration/rollout first, then dispatch a known schema-compatible prior digest; schema repair remains a separately reviewed operation. A staging deployment can be run through the same workflow without granting it production environment credentials.
 
 Production releases require deployment permissions and environment approval.
 

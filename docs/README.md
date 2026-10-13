@@ -20,6 +20,8 @@ Health probes, metrics, and optional tracing are described in [Observability ope
 
 Helm deployment, migration, and recovery procedures are in [Kubernetes operations](operations/kubernetes.md).
 
+CI, image release, protected deployment setup, and pipeline recovery instructions are in [Kubernetes operations](operations/kubernetes.md#github-actions-release-and-deployment).
+
 ## Conventions
 
 - Keep source references intact and link to them from derived documents.

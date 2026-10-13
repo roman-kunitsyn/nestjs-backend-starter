@@ -1,6 +1,6 @@
 {
   "project": {
-    "status": "in_progress",
+    "status": "blocked",
     "current_stage": "Stage 09 — Production Deployment",
     "next_milestone": "M021"
   },
@@ -520,11 +520,12 @@
       "id": "M021",
       "title": "CI/CD and Release Safety",
       "stage": "stage-09",
-      "status": "pending",
+      "status": "blocked",
       "dependencies": [
         "M020"
       ],
-      "contract": "milestones/M021-cicd.md"
+      "contract": "milestones/M021-cicd.md",
+      "blocker": "GitHub Actions and staging verification require repository environment configuration and staging cluster access not present in this workspace."
     },
     {
       "id": "M022",

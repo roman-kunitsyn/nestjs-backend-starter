@@ -2,9 +2,9 @@
 
 > Generated from `progress.json` by `pnpm progress:dashboard`. Do not edit by hand.
 
-**Project status:** in_progress
+**Project status:** blocked
 **Current stage:** Stage 09 — Production Deployment
-**Next milestone:** M021 — CI/CD and Release Safety (pending)
+**Next milestone:** M021 — CI/CD and Release Safety (blocked)
 
 ## Stage 00 — Preparation
 

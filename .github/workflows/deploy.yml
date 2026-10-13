@@ -1,0 +1,158 @@
+name: Deploy image
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Protected GitHub deployment environment
+        required: true
+        type: choice
+        options: [staging, production]
+      image_digest:
+        description: Published image digest, for example sha256:...
+        required: true
+        type: string
+      version:
+        description: Release version recorded with the image
+        required: true
+        type: string
+      source_commit:
+        description: Full 40-character source commit SHA from the release run
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      id-token: write
+    timeout-minutes: 30
+    env:
+      KUBECONFIG: ${{ runner.temp }}/kubeconfig
+      KUBECONFIG_DATA: ${{ secrets.KUBECONFIG }}
+      HELM_VALUES_YAML: ${{ secrets.HELM_VALUES_YAML }}
+      SMOKE_URL: ${{ vars.SMOKE_URL }}
+      KUBE_NAMESPACE: ${{ vars.KUBE_NAMESPACE || inputs.environment }}
+      RELEASE_NAME: ${{ vars.HELM_RELEASE_NAME || 'nestjs-backend-starter' }}
+    steps:
+      - name: Check out deployment chart
+        uses: actions/checkout@v4
+
+      - name: Resolve registry image name
+        id: image
+        shell: bash
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Validate deployment inputs and environment configuration
+        shell: bash
+        env:
+          IMAGE_DIGEST: ${{ inputs.image_digest }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          SOURCE_COMMIT: ${{ inputs.source_commit }}
+        run: |
+          [[ "$IMAGE_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
+          [[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]
+          [[ "$SOURCE_COMMIT" =~ ^[a-f0-9]{40}$ ]]
+          test -n "$KUBECONFIG_DATA"
+          test -n "$HELM_VALUES_YAML"
+          test -n "$SMOKE_URL"
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Configure cluster access
+        shell: bash
+        run: |
+          umask 077
+          printf '%s' "$KUBECONFIG_DATA" > "$KUBECONFIG"
+          kubectl config current-context
+          helm lint helm/nestjs-backend-starter -f <(printf '%s' "$HELM_VALUES_YAML")
+
+      - name: Deploy by digest and wait for migration and rollout
+        shell: bash
+        env:
+          IMAGE_DIGEST: ${{ inputs.image_digest }}
+        run: |
+          umask 077
+          printf '%s' "$HELM_VALUES_YAML" > "$RUNNER_TEMP/values.yaml"
+          helm upgrade --install "$RELEASE_NAME" helm/nestjs-backend-starter \
+            --namespace "$KUBE_NAMESPACE" --create-namespace \
+            --values "$RUNNER_TEMP/values.yaml" \
+            --set-string image.repository="${{ steps.image.outputs.name }}" \
+            --set-string image.digest="$IMAGE_DIGEST" \
+            --wait --wait-for-jobs --timeout 10m
+          kubectl rollout status "deployment/${RELEASE_NAME}-nestjs-backend-starter" \
+            --namespace "$KUBE_NAMESPACE" --timeout=5m
+
+      - name: Verify migration Job succeeded
+        id: migration
+        shell: bash
+        run: |
+          job="$(kubectl get jobs --namespace "$KUBE_NAMESPACE" \
+            -l "app.kubernetes.io/instance=$RELEASE_NAME,app.kubernetes.io/component=migration" \
+            -o json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const x=JSON.parse(s).items.sort((a,b)=>Date.parse(b.metadata.creationTimestamp)-Date.parse(a.metadata.creationTimestamp));if(!x[0])process.exit(1);process.stdout.write(x[0].metadata.name)})')"
+          kubectl wait --namespace "$KUBE_NAMESPACE" --for=condition=complete \
+            "job/$job" --timeout=10m
+          echo "job=$job" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke test deployed endpoint
+        shell: bash
+        run: |
+          status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 30 "$SMOKE_URL")"
+          [[ "$status" =~ ^2[0-9]{2}$ ]]
+          echo "Smoke test returned HTTP $status"
+
+      - name: Record deployment evidence
+        id: record
+        shell: bash
+        env:
+          IMAGE_DIGEST: ${{ inputs.image_digest }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          SOURCE_COMMIT: ${{ inputs.source_commit }}
+          TARGET_ENVIRONMENT: ${{ inputs.environment }}
+          MIGRATION_JOB: ${{ steps.migration.outputs.job }}
+          IMAGE: ${{ steps.image.outputs.name }}
+        run: |
+          helm_revision="$(helm status "$RELEASE_NAME" --namespace "$KUBE_NAMESPACE" -o json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.stdout.write(String(JSON.parse(s).version)))')"
+          ready="$(kubectl get deployment "${RELEASE_NAME}-nestjs-backend-starter" \
+            --namespace "$KUBE_NAMESPACE" -o json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s);process.stdout.write(`${d.status.readyReplicas ?? 0}/${d.status.updatedReplicas ?? 0} ready/updated`)})')"
+          mkdir -p "$RUNNER_TEMP/deployment-record"
+          HELM_REVISION="$helm_revision" READY_REPLICAS="$ready" \
+            node -e 'const fs=require("node:fs");fs.writeFileSync(process.argv[1],JSON.stringify({environment:process.env.TARGET_ENVIRONMENT,version:process.env.RELEASE_VERSION,sourceCommit:process.env.SOURCE_COMMIT,deployWorkflowCommit:process.env.GITHUB_SHA,image:`${process.env.IMAGE}@${process.env.IMAGE_DIGEST}`,helmRevision:Number(process.env.HELM_REVISION),migrationJob:process.env.MIGRATION_JOB,readyReplicas:process.env.READY_REPLICAS,smokeTest:"passed",completedAt:new Date().toISOString()},null,2)+"\n")' \
+            "$RUNNER_TEMP/deployment-record/deployment.json"
+          {
+            echo '### Deployment completed'
+            echo
+            echo "- Environment: \`$TARGET_ENVIRONMENT\`"
+            echo "- Version: \`$RELEASE_VERSION\`"
+            echo "- Source commit: \`${SOURCE_COMMIT}\`"
+            echo "- Deployment workflow commit: \`${GITHUB_SHA}\`"
+            echo "- Image: \`${IMAGE}@${IMAGE_DIGEST}\`"
+            echo "- Helm revision: \`${helm_revision}\`"
+            echo "- Migration Job: \`${MIGRATION_JOB}\` (complete)"
+            echo "- Ready replicas: \`${ready}\`"
+            echo "- Smoke test: passed"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "HELM_REVISION=$helm_revision" >> "$GITHUB_ENV"
+          echo "READY_REPLICAS=$ready" >> "$GITHUB_ENV"
+
+      - name: Upload deployment record
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-${{ inputs.environment }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/deployment-record/deployment.json
+          if-no-files-found: error
+          retention-days: 90
