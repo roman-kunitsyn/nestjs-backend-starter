@@ -11,6 +11,7 @@ This directory contains the approved implementation sequence and its execution s
 - [Progress data](progress.json) is authoritative; [the dashboard](progress.md) is its human-readable summary.
 - [Roadmap](roadmap.md) defines approved ordering and scope; [requirements matrix](requirements-matrix.md) traces requirements to evidence; [definition of done](definition-of-done.md) records completion gates.
 - Database connection and migration procedures are documented in [operations](../operations/local-development.md), [migrations](../operations/migrations.md), and [testing](../operations/testing.md).
+- CI and workflow recovery are in [GitHub Actions operations](../operations/github-actions.md); versioned GHCR releases are in [release operations](../operations/releases.md); environments and repository protection are in [GitHub governance](../operations/github-governance.md). Deployment, rollback, and database recovery remain in [Kubernetes operations](../operations/kubernetes.md) and [migration operations](../operations/migrations.md).
 
 ## Resuming work
 

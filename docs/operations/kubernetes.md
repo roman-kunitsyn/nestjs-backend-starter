@@ -40,6 +40,55 @@ Confirm the migration journal and marker, then run the app readiness/smoke check
 
 For each actual staging rollout record cluster/context (without credentials), chart version, image digest, migration Job result, Helm revision, ready replicas, startup/readiness/liveness behavior, TLS and smoke results, shutdown/drain result, rollback result, and any deviations. No actual production-like staging deployment or managed PostgreSQL PITR rehearsal is claimed by M020's local kind/k3d and isolated-database tests. Complete and attach this environment-specific evidence in M022 before project acceptance.
 
+## Deployment and application rollback quick procedure
+
+### Prerequisites
+
+- `kubectl` configured for the intended cluster/namespace, Helm 3, and access to the registry image by digest.
+- The namespace, ingress/TLS, externally managed Secret, database, and reviewed environment values already exist.
+- A database backup/recovery point has been checked and the release migration is compatible with both the current and target application versions.
+- Use a schema-compatible image digest for application rollback. Never use image rollback as a database rollback.
+
+### Deploy and verify
+
+```bash
+helm lint helm/nestjs-backend-starter -f ./environment-values.yaml
+helm upgrade --install nestjs-backend-starter helm/nestjs-backend-starter \
+  --namespace staging --create-namespace \
+  --values ./environment-values.yaml \
+  --set-string image.repository=ghcr.io/roman-kunitsyn/nestjs-backend-starter \
+  --set-string image.digest=sha256:REPLACE_WITH_64_HEX_DIGEST \
+  --wait --wait-for-jobs --timeout 10m
+kubectl rollout status deployment/nestjs-backend-starter-nnestjs-backend-starter \
+  --namespace staging --timeout=5m
+kubectl get jobs -n staging \
+  -l app.kubernetes.io/instance=nestjs-backend-starter,app.kubernetes.io/component=migration
+kubectl get pods -n staging -l app.kubernetes.io/instance=nestjs-backend-starter -o wide
+```
+
+Expected: `helm lint` succeeds; Helm waits for the pre-upgrade migration hook and rollout; rollout reports success; the migration Job is complete; expected replicas are ready. Replace sample environment inputs with verified values. For GitHub deployment, use the protected workflow and digest recorded by the release run; see [GitHub governance](github-governance.md).
+
+### Roll back application code
+
+```bash
+helm history nestjs-backend-starter --namespace staging
+helm rollback nestjs-backend-starter REVISION --namespace staging --wait --timeout 10m
+kubectl rollout status deployment/nestjs-backend-starter-nnestjs-backend-starter \
+  --namespace staging --timeout=5m
+helm status nestjs-backend-starter --namespace staging
+```
+
+Expected: Helm reports a new rollback revision and the Deployment converges to ready replicas on the prior compatible image. In GitHub deployment, rollback is a new protected dispatch with the prior verified image digest. The workflow does not roll back automatically and never reverses migrations.
+
+### Troubleshooting and manual verification
+
+- Helm times out or the migration Job fails: `kubectl get jobs,pods -n staging`; `kubectl describe job JOB_NAME -n staging`; `kubectl logs job/JOB_NAME -n staging`. Check database connectivity, credentials, and migration journal before retrying.
+- Pods do not become ready: `kubectl describe pod POD_NAME -n staging`; `kubectl logs deployment/nestjs-backend-starter-nnestjs-backend-starter -n staging --all-containers=true`; inspect events and readiness configuration.
+- Rollback is unsafe: stop and review schema compatibility; restore/repair data through the database recovery procedure rather than reversing migrations automatically.
+- Before calling deployment successful, manually verify immutable digest in Helm values and the running pod image, migration Job completion, rollout status, readiness, ingress/TLS, and application smoke response. Record digest, Helm revision, migration Job, ready replicas, and smoke result.
+
+Database restore and migration verification are documented in [Database migrations](migrations.md#backup-restore-verification-and-troubleshooting).
+
 ## GitHub Actions release and deployment
 
 The repository provides `.github/workflows/ci.yml`, `release.yml`, and `deploy.yml`. CI runs for pull requests and pushes to `main`; all test and security steps are required job steps, so a failure fails the workflow. Configure `Quality and image gates` as a required pull request status check in branch protection or a repository ruleset. Testcontainers uses the hosted runner's Docker service. A version tag such as `v1.2.3` invokes the reusable CI workflow and publishes the GHCR image under version and commit SHA tags. The release run summary records the source commit and image digest; BuildKit attaches SBOM and provenance metadata, and Trivy scans the pushed digest. Configure repository rules to protect release tags and GHCR tag immutability where available. Consumers must deploy the recorded digest because tags alone are mutable references.

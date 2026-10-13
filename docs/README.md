@@ -18,9 +18,11 @@ The current scaffold setup is in [Local development](operations/local-developmen
 
 Health probes, metrics, and optional tracing are described in [Observability operations](operations/observability.md).
 
-Helm deployment, migration, and recovery procedures are in [Kubernetes operations](operations/kubernetes.md).
+Helm deployment and cluster operations are in [Kubernetes operations](operations/kubernetes.md). Database restore and migration recovery are in [Database migrations](operations/migrations.md).
 
-CI, image release, protected deployment setup, and pipeline recovery instructions are in [Kubernetes operations](operations/kubernetes.md#github-actions-release-and-deployment).
+GitHub procedures are split into [CI and workflow troubleshooting](operations/github-actions.md), [versioned releases and GHCR verification](operations/releases.md), and [GitHub environments and repository protection](operations/github-governance.md).
+
+Cluster deployment and application rollback commands are in [Kubernetes operations](operations/kubernetes.md#deployment-and-application-rollback-quick-procedure); migration verification and database restore guidance are in [Database migrations](operations/migrations.md#backup-restore-verification-and-troubleshooting).
 
 ## Conventions
 
