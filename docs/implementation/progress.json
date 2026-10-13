@@ -1,8 +1,8 @@
 {
   "project": {
-    "status": "blocked",
-    "current_stage": "Stage 09 — Production Deployment",
-    "next_milestone": "M021"
+    "status": "in_progress",
+    "current_stage": "Stage 10 — Final Verification",
+    "next_milestone": "M022"
   },
   "stages": [
     {
@@ -90,7 +90,7 @@
     {
       "id": "stage-09",
       "title": "Production Deployment",
-      "status": "in_progress",
+      "status": "completed",
       "milestones": [
         "M019",
         "M020",
@@ -520,12 +520,21 @@
       "id": "M021",
       "title": "CI/CD and Release Safety",
       "stage": "stage-09",
-      "status": "blocked",
+      "status": "completed",
       "dependencies": [
         "M020"
       ],
       "contract": "milestones/M021-cicd.md",
-      "blocker": "Operator-verified governance is recorded: staging allows main; production allows only v*.*.* (policy ID 62881396) and requires reviewer roman-kunitsyn; administrator bypass is disabled for both. Hosted CI run 38359105430 and v0.0.1 release run 38359664805 remain the recorded successful quality and artifact evidence, including digest/SBOM/provenance/security checks. The validation-only workflow is published, but GitHub rejected its manual dispatch with HTTP 422 because runner.temp was used in deployment job-level env at line 121, column 19. The invalid job-level KUBECONFIG expression is removed and a deployment-only initialization step now sets KUBECONFIG from RUNNER_TEMP through GITHUB_ENV. Pinned actionlint v1.7.7 passed on all workflow files; Helm lint, progress validation, and 11 progress regression tests passed. The validation-only job retains no credentials, OIDC permission, cluster connection, or deployment steps. A successful hosted rerun is required to verify release identity and digest checks, successful validation job, skipped deploy job, and the no-deployment summary against v0.0.1 (source commit 460e3e0581e3afd43ad644caef383c9696a32522; digest sha256:6f87cc59a9aa6ca69ab05fa6599887263d95b31c6a614ef89a036dffc178bf16). Do not deploy or rewrite v0.0.1."
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Hosted validation-only run 38376828111 passed on main commit 4b59aa35442d2144356f4d0a2bac80d85adcb4dc; v0.0.1 release workflow identity for source 460e3e0581e3afd43ad644caef383c9696a32522 and digest sha256:6f87cc59a9aa6ca69ab05fa6599887263d95b31c6a614ef89a036dffc178bf16 verified",
+          "GHCR version and source-SHA references matched the recorded digest; validation job succeeded, deploy job skipped, and summary confirmed no deployment secrets, OIDC permission, or cluster actions",
+          "Hosted CI/release, SBOM/provenance, dependency/image scanning, rulesets, and staging/production governance evidence preserved",
+          "Pinned actionlint v1.7.7 validation passed after runner-context correction; Helm lint, progress validation, and all 11 progress regression tests passed",
+          "M021 completion validated; M022 selected as next milestone"
+        ]
+      }
     },
     {
       "id": "M022",
