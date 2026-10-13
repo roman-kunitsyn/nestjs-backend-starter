@@ -525,7 +525,7 @@
         "M020"
       ],
       "contract": "milestones/M021-cicd.md",
-      "blocker": "GitHub Actions and staging verification require repository environment configuration and staging cluster access not present in this workspace."
+      "blocker": "Rechecked 2026-10-13: GitHub access is unavailable (no Git remote configured; gh auth status reports an invalid saved token), and staging credentials/environment configuration are absent. GitHub environment protection and staging deployment remain unverifiable."
     },
     {
       "id": "M022",
