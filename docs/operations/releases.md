@@ -75,6 +75,54 @@ Expected: the first command prints `true`; the second lists attestation manifest
 
 The scan's acceptance policy is the workflow setting: Trivy scans the pushed digest for OS and library vulnerabilities at HIGH/CRITICAL severity, ignores findings without fixes, and fails on any remaining match. In the `Publish immutable image` job, manually inspect the complete `Scan published image digest` step and confirm it succeeded for the exact `IMAGE@DIGEST`. A successful step means no findings met that configured blocking policy; it does not mean the image has zero vulnerabilities.
 
+## Dispatch a deployment
+
+The production environment must allow version tags matching `v*.*.*`, require reviewer approval, and have administrator bypass disabled. The staging environment should allow only protected `main`. Use a protected release tag that contains the deployment workflow version you intend to run. Do not move, delete, or recreate the existing `v0.0.1` tag; it points to the original release commit and predates the added release-identity checks. A later release tag can be selected only after that release has been published through the protected release process. GitHub CLI `workflow run --ref` accepts a branch or tag; the workflow must exist on the default branch, and GitHub supplies the selected tag ref and its commit to the `workflow_dispatch` run ([GitHub manual dispatch documentation](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow), [GitHub CLI reference](https://cli.github.com/manual/gh_workflow_run)). GitHub also requires the workflow to have run at least once before dispatching it against another branch or tag, so use the non-deploying initialization below before the first tag-based production dispatch.
+
+Find the successful tagged release run and copy its exact tag, source SHA, and image digest from the run summary:
+
+```bash
+gh run list --repo roman-kunitsyn/nestjs-backend-starter \
+  --workflow release.yml --branch "v$VERSION" --limit 10
+gh run view "$RELEASE_RUN_ID" --repo roman-kunitsyn/nestjs-backend-starter \
+  --json conclusion,headBranch,headSha,url
+```
+
+Confirm `conclusion` is `success`, `headBranch` is `v$VERSION`, and `headSha` matches the source commit in the release summary. Set `SOURCE_COMMIT` to that full SHA and `DIGEST` to the exact `sha256:` digest from the same successful run. Verify that both GHCR references resolve to that digest before dispatch:
+
+```bash
+IMAGE=ghcr.io/roman-kunitsyn/nestjs-backend-starter
+docker buildx imagetools inspect "$IMAGE:$VERSION"
+docker buildx imagetools inspect "$IMAGE:sha-$SOURCE_COMMIT"
+```
+
+Both references must report the same digest as `DIGEST`; inspect the release run's successful scan and SBOM/provenance record as described above.
+
+For first use after the deploy workflow is merged to the default branch, run the identity-only initialization from protected `main`. It is limited to staging and main, verifies the same tagged release and GHCR digests, does not read deployment credentials, and does not contact a cluster:
+
+```bash
+gh workflow run deploy.yml --ref main \
+  -f environment=staging \
+  -f image_digest="$DIGEST" \
+  -f version="$VERSION" \
+  -f source_commit="$SOURCE_COMMIT" \
+  -f validation_only=true
+```
+
+Confirm the run succeeds and its summary says no deployment occurred. Subsequent production dispatches use the protected release tag below with `validation_only` left at its default `false`.
+
+Dispatch production from that same protected release tag:
+
+```bash
+gh workflow run deploy.yml --ref "v$VERSION" \
+  -f environment=production \
+  -f image_digest="$DIGEST" \
+  -f version="$VERSION" \
+  -f source_commit="$SOURCE_COMMIT"
+```
+
+The workflow rejects a production dispatch unless the selected tag matches the version and source commit, a successful release workflow exists for that tag and commit, and both GHCR version and source-SHA references resolve to the requested digest. For staging, use `--ref main` and `-f environment=staging`; the same release and digest checks apply. Approve the production job only after verifying the release identity and target environment. The workflow then validates environment-specific inputs, runs the migration hook before rollout, waits for health and smoke checks, and records the deployment digest.
+
 Manual verification in GitHub:
 
 1. Open the release run and confirm its tag, full source SHA, success conclusion, both jobs, and summary digest.
@@ -97,3 +145,5 @@ Manual verification in GitHub:
 ## Release evidence recorded for v0.0.1
 
 The standalone main CI run [38359105430](https://github.com/roman-kunitsyn/nestjs-backend-starter/actions/runs/38359105430) and tagged release workflow [38359664805](https://github.com/roman-kunitsyn/nestjs-backend-starter/actions/runs/38359664805) completed successfully on 2026-10-13 at commit `460e3e0581e3afd43ad644caef383c9696a32522`. Both release jobs passed, including dependency and exact-digest Trivy scans. The run summary records `sha256:6f87cc59a9aa6ca69ab05fa6599887263d95b31c6a614ef89a036dffc178bf16`. Direct GHCR inspection confirmed that digest resolves to an OCI index and that the published image includes an attestation manifest with SPDX (`https://spdx.dev/Document`) and SLSA provenance (`https://slsa.dev/provenance/v1`) predicates. The build job log records version/source OCI labels. The run also uploaded build record artifact `11794660508` (artifact SHA-256 `5e551173666f44ba46c8e0e37fc2341d5ae8a2d3fd2f540b6fa7f0a87f3d3c8c`). This artifact digest is not the image digest. A GitHub Release page for `v0.0.1` was not found; the versioned GHCR artifact is the release output defined by this repository's workflow.
+
+Hosted workflow evidence: [CI run 38359105430](https://github.com/roman-kunitsyn/nestjs-backend-starter/actions/runs/38359105430) and [tagged release run 38359664805](https://github.com/roman-kunitsyn/nestjs-backend-starter/actions/runs/38359664805) passed. The current local deploy workflow revision has no hosted run yet: the GitHub default branch still serves the older `deploy.yml` and has not received the `validation_only` job. Record its successful run URL and summary here after publishing; it must use `--ref main`, `environment=staging`, and `validation_only=true` against this immutable v0.0.1 identity, and its summary must confirm no deployment occurred.
