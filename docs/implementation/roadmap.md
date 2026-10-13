@@ -15,8 +15,8 @@ This is the approved finite implementation sequence. It maps the source specific
 | [06 — Email and audit](stages/stage-06-email-audit.md) | Complete email adapters, transactional outbox, dispatch, and audit events. | M015 | Email retries and audit atomicity are verified. |
 | [07 — Example resource](stages/stage-07-example-resource.md) | Demonstrate reusable tenant-scoped CRUD, ownership, and cursor pagination. | M016 | Complete authorized resource behavior and isolation tests pass. |
 | [08 — Security and observability](stages/stage-08-security-observability.md) | Apply production security controls, health checks, metrics, and tracing hooks. | M017–M018 | Controls and operational signals behave correctly across replicas. |
-| [09 — Production deployment](stages/stage-09-production-deployment.md) | Build secure container, Helm/Kubernetes deployment, migrations, and CI/CD. | M019–M021 | kind/k3d rollout/recovery and GitHub Actions/GHCR/environment/workflow safety gates pass; actual environment-specific staging deployment and managed recovery remain M022 final acceptance gates under ADR-002. |
-| [10 — Final verification](stages/stage-10-final-verification.md) | Reconcile documentation and requirements, run complete checks, and perform final acceptance. | M022 | All release-blocking criteria pass and project status can be completed. |
+| [09 — Production deployment](stages/stage-09-production-deployment.md) | Build secure container, Helm/Kubernetes deployment, migrations, and CI/CD. | M019–M021 | kind/k3d rollout/recovery and GitHub Actions/GHCR/security/ruleset/environment-governance/workflow safety gates pass; live deployment inputs remain adopter responsibilities under ADR-002. |
+| [10 — Final verification](stages/stage-10-final-verification.md) | Reconcile documentation and requirements, run complete checks, and perform final acceptance. | M022 | Integrated acceptance passes in a fresh disposable local Kubernetes cluster and PostgreSQL instance with synthetic data; provider-specific deployment and recovery remain consumer requirements. |
 
 ## Ordered milestones and dependencies
 

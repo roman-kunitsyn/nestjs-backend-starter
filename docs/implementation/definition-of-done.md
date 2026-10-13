@@ -36,7 +36,13 @@ M022 may mark the project completed only after confirming:
 3. All required lint, typecheck, unit, PostgreSQL integration, E2E, contract, build, Helm, security, and deployment checks pass. A required check that is unavailable is not a pass; resolve it or keep the milestone/project incomplete or blocked under `AGENTS.md`.
 4. No release-blocking defects remain.
 5. Architecture, API, operations, and user-facing docs match the implementation.
-6. Deployment, migration, secret, scaling, backup, and recovery requirements have actual evidence; no deployment or restore is claimed without execution.
+6. Deployment, migration, secret, scaling, backup, and recovery behavior in the reusable template has actual local verification evidence; no provider deployment or managed restore is claimed without execution. Provider-specific infrastructure, real environment credentials, production TLS/DNS, managed PostgreSQL PITR, live cloud deployment, and production disaster recovery are adopter deployment responsibilities and are documented separately.
 7. Progress records are consistent, and project status is set to `completed` only after all evidence is recorded.
+
+### M022 infrastructure acceptance boundary
+
+M022 uses a fresh disposable kind or k3d cluster and PostgreSQL instance with synthetic data. It verifies Helm install/upgrade, migrations, health probes, local smoke checks, application rollback, database backup/restore, Kubernetes security controls, and documentation consistency. GitHub governance and release evidence are verified under M021. None of these local checks are represented as production/provider evidence.
+
+M021 requires verifiable GitHub-side workflow, artifact, ruleset, and staging/production environment-policy evidence. It does not require populated deployment credentials or a live deployment. The workflow inputs `KUBECONFIG`, `HELM_VALUES_YAML`, and `SMOKE_URL` are documented consumer integration contracts. Real cloud infrastructure, provider credentials, managed PostgreSQL PITR, and production disaster recovery remain adopter responsibilities; they are not waived requirements, but are outside template acceptance and must be addressed by each deployment owner.
 
 Project completion is terminal for this roadmap. Further work requires an explicitly approved new scope.

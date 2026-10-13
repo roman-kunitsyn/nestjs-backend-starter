@@ -507,12 +507,12 @@
       "completion": {
         "date": "2026-10-13",
         "verification": [
-          "ADR-002 approved and applied across M020/M022 contracts, Stage 09, architecture, operations, and requirements traceability; real staging and managed PITR remain M022 gates",
+          "ADR-002 applied across M020/M021/M022 contracts, Stage 09/10, architecture, operations, definition of done, and requirements traceability; M022 requires fresh disposable local infrastructure, while real staging and managed PITR are consumer responsibilities",
           "Helm lint/template passed for chart 0.2.1; live kind v1.37 install and rollout verified migration hook ordering, 2/2 readiness, maxSurge=1/maxUnavailable=0, HPA 2–10 at 70%, PDB minAvailable=1, probes, TLS Ingress, external Secret reference, and operational endpoint exclusion",
           "Deliberate bad DB password failed pre-upgrade Job with PostgreSQL 28P01 and preserved the healthy release; compatible-image upgrade and rollback passed, final revision 3 converged to two ready pods on the prior image",
           "Calico v3.33 kind cluster enforced corrected NetworkPolicy: ingress from selected ingress namespace and app-to-selected DB allowed; untrusted namespace ingress and default SMTP egress denied; app pod verified UID 1000, zero capabilities, read-only root, RuntimeDefault seccomp, and no service-account token",
           "Isolated PostgreSQL 18.6 custom-format dump/restore took 381 ms; marker synthetic-m020-final-restore and four Drizzle migration records survived, and app readiness against restored data returned 200",
-          "pnpm image:build, Helm lint/template, progress validation and regression checks passed; dynamic CPU scaling not run (metrics-server unavailable); managed-service PITR and actual staging deployment remain unverified M022 gates"
+          "pnpm image:build, Helm lint/template, progress validation and regression checks passed; dynamic CPU scaling not run (metrics-server unavailable); managed-service PITR and actual staging deployment were not run and are not template completion gates"
         ]
       }
     },
@@ -525,7 +525,7 @@
         "M020"
       ],
       "contract": "milestones/M021-cicd.md",
-      "blocker": "Rechecked 2026-10-13 with authenticated GitHub API outside the restricted network sandbox: auth and user lookup succeeded with repo/workflow/read:packages scopes. Latest main CI run 38354045254 on 71f72a2 failed during setup resolving aquasecurity/trivy-action@0.36.0. The CI workflow is corrected in the repository, and this session corrected the same invalid action ref in the release workflow; local checks cannot provide the required hosted execution evidence. No release tags/releases or GHCR packages exist; no artifact digest, identity, SBOM/provenance, or published-image scan evidence exists. Actions are enabled. No staging/production environments, main branch protection, or rulesets exist. A repository maintainer must publish the workflow fixes and verify CI; publish and verify a matching semver-tagged GHCR release; create separately configured staging/production environments with production reviewers/ref restrictions; protect main with the Quality and image gates check and protect release tags. No push, tag, release, setting change, or deployment was performed. Keep M021 blocked until mandatory execution, publication, artifact, and environment protection evidence passes. Actual staging deployment is an M022 gate, not an M021 prerequisite."
+      "blocker": "Operator-verified governance is recorded: staging allows main; production allows only v*.*.* (policy ID 62881396) and requires reviewer roman-kunitsyn; administrator bypass is disabled for both. The immutable hosted CI and v0.0.1 release evidence remain successful. The current local deployment workflow is not yet present on the GitHub default branch (remote deploy.yml blob 5dad4af0361e20d7467d3ce90c673df311d0e32c), so a successful hosted validation_only run against the immutable release evidence cannot yet be recorded. Publish the staged workflow, run its staging/main validation_only path, confirm no deployment occurred, and record the hosted run link/result before completing M021. Do not deploy or rewrite v0.0.1."
     },
     {
       "id": "M022",

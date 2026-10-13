@@ -20,33 +20,169 @@ on:
         description: Full 40-character source commit SHA from the release run
         required: true
         type: string
+      validation_only:
+        description: Verify release identity without reading deployment secrets or deploying
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
+  actions: read
+  packages: read
 
 concurrency:
   group: deploy-${{ inputs.environment }}
   cancel-in-progress: false
 
 jobs:
+  validate-release:
+    name: Validate release identity (no deployment)
+    if: ${{ inputs.validation_only }}
+    runs-on: ubuntu-latest
+    environment: staging
+    permissions: {}
+    timeout-minutes: 10
+    steps:
+      - name: Enforce staging ref and release identity
+        shell: bash
+        env:
+          DEPLOY_ENVIRONMENT: ${{ inputs.environment }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          SOURCE_COMMIT: ${{ inputs.source_commit }}
+          IMAGE_DIGEST: ${{ inputs.image_digest }}
+        run: |
+          [[ "$DEPLOY_ENVIRONMENT" == staging ]]
+          [[ "$GITHUB_REF_TYPE" == branch && "$GITHUB_REF_NAME" == main ]]
+          [[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]
+          [[ "$SOURCE_COMMIT" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$IMAGE_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
+
+          runs="$(curl --fail --silent --show-error \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/release.yml/runs?head_sha=$SOURCE_COMMIT&branch=v$RELEASE_VERSION&event=push&per_page=100")"
+          SOURCE_COMMIT="$SOURCE_COMMIT" RELEASE_VERSION="$RELEASE_VERSION" node -e '
+            let data = "";
+            process.stdin.on("data", chunk => data += chunk).on("end", () => {
+              const runs = JSON.parse(data).workflow_runs ?? [];
+              const valid = runs.some(run => run.event === "push" && run.status === "completed" &&
+                run.conclusion === "success" && run.head_sha === process.env.SOURCE_COMMIT &&
+                run.head_branch === `v${process.env.RELEASE_VERSION}`);
+              if (!valid) {
+                console.error("No successful tagged release workflow matches the requested version and source commit");
+                process.exit(1);
+              }
+            });
+          ' <<< "$runs"
+
+      - name: Verify digest matches release version and source tags
+        shell: bash
+        env:
+          IMAGE_DIGEST: ${{ inputs.image_digest }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          SOURCE_COMMIT: ${{ inputs.source_commit }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          IMAGE="ghcr.io/${REPOSITORY,,}"
+          expected="${IMAGE_DIGEST,,}"
+          version_digest="$(docker buildx imagetools inspect "$IMAGE:$RELEASE_VERSION" | awk '$1 == "Digest:" { print $2; exit }')"
+          source_digest="$(docker buildx imagetools inspect "$IMAGE:sha-$SOURCE_COMMIT" | awk '$1 == "Digest:" { print $2; exit }')"
+          test "$version_digest" = "$expected"
+          test "$source_digest" = "$expected"
+
+      - name: Record validation-only result
+        shell: bash
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          SOURCE_COMMIT: ${{ inputs.source_commit }}
+          IMAGE_DIGEST: ${{ inputs.image_digest }}
+        run: |
+          {
+            echo '### Release identity validated (no deployment)'
+            echo
+            echo "- Version: \`$RELEASE_VERSION\`"
+            echo "- Source commit: \`${SOURCE_COMMIT}\`"
+            echo "- Image digest: \`${IMAGE_DIGEST}\`"
+            echo '- Successful tagged release run and both GHCR references verified'
+            echo '- No deployment secrets or OIDC token permission were available; no cluster actions were run'
+          } >> "$GITHUB_STEP_SUMMARY"
+
   deploy:
     name: Deploy to ${{ inputs.environment }}
+    if: ${{ !inputs.validation_only }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     permissions:
       contents: read
+      actions: read
+      packages: read
       id-token: write
     timeout-minutes: 30
     env:
       KUBECONFIG: ${{ runner.temp }}/kubeconfig
-      KUBECONFIG_DATA: ${{ secrets.KUBECONFIG }}
-      HELM_VALUES_YAML: ${{ secrets.HELM_VALUES_YAML }}
-      SMOKE_URL: ${{ vars.SMOKE_URL }}
       KUBE_NAMESPACE: ${{ vars.KUBE_NAMESPACE || inputs.environment }}
       RELEASE_NAME: ${{ vars.HELM_RELEASE_NAME || 'nestjs-backend-starter' }}
     steps:
       - name: Check out deployment chart
         uses: actions/checkout@v4
+
+      - name: Enforce deployment ref and release identity
+        shell: bash
+        env:
+          DEPLOY_ENVIRONMENT: ${{ inputs.environment }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          SOURCE_COMMIT: ${{ inputs.source_commit }}
+          IMAGE_DIGEST: ${{ inputs.image_digest }}
+          VALIDATION_ONLY: ${{ inputs.validation_only }}
+        run: |
+          [[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]
+          [[ "$SOURCE_COMMIT" =~ ^[a-f0-9]{40}$ ]]
+          [[ "$IMAGE_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
+          if [[ "$VALIDATION_ONLY" == true ]]; then
+            [[ "$DEPLOY_ENVIRONMENT" == staging ]]
+            [[ "$GITHUB_REF_TYPE" == branch && "$GITHUB_REF_NAME" == main ]]
+          fi
+          if [[ "$DEPLOY_ENVIRONMENT" == production ]]; then
+            [[ "$GITHUB_REF_TYPE" == tag ]]
+            [[ "$GITHUB_REF_NAME" == "v$RELEASE_VERSION" ]]
+            [[ "$GITHUB_SHA" == "$SOURCE_COMMIT" ]]
+          fi
+
+          runs="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/release.yml/runs?head_sha=$SOURCE_COMMIT&branch=v$RELEASE_VERSION&event=push&per_page=100")"
+          SOURCE_COMMIT="$SOURCE_COMMIT" RELEASE_VERSION="$RELEASE_VERSION" node -e '
+            let data = "";
+            process.stdin.on("data", chunk => data += chunk).on("end", () => {
+              const runs = JSON.parse(data).workflow_runs ?? [];
+              const valid = runs.some(run => run.event === "push" && run.status === "completed" &&
+                run.conclusion === "success" && run.head_sha === process.env.SOURCE_COMMIT &&
+                run.head_branch === `v${process.env.RELEASE_VERSION}`);
+              if (!valid) {
+                console.error("No successful tagged release workflow matches the requested version and source commit");
+                process.exit(1);
+              }
+            });
+          ' <<< "$runs"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify digest matches release version and source tags
+        shell: bash
+        env:
+          IMAGE_DIGEST: ${{ inputs.image_digest }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          SOURCE_COMMIT: ${{ inputs.source_commit }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          IMAGE="ghcr.io/${REPOSITORY,,}"
+          expected="${IMAGE_DIGEST,,}"
+          version_digest="$(docker buildx imagetools inspect "$IMAGE:$RELEASE_VERSION" | awk '$1 == "Digest:" { print $2; exit }')"
+          source_digest="$(docker buildx imagetools inspect "$IMAGE:sha-$SOURCE_COMMIT" | awk '$1 == "Digest:" { print $2; exit }')"
+          test "$version_digest" = "$expected"
+          test "$source_digest" = "$expected"
 
       - name: Resolve registry image name
         id: image
@@ -54,11 +190,15 @@ jobs:
         run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
 
       - name: Validate deployment inputs and environment configuration
+        if: ${{ !inputs.validation_only }}
         shell: bash
         env:
           IMAGE_DIGEST: ${{ inputs.image_digest }}
           RELEASE_VERSION: ${{ inputs.version }}
           SOURCE_COMMIT: ${{ inputs.source_commit }}
+          KUBECONFIG_DATA: ${{ secrets.KUBECONFIG }}
+          HELM_VALUES_YAML: ${{ secrets.HELM_VALUES_YAML }}
+          SMOKE_URL: ${{ vars.SMOKE_URL }}
         run: |
           [[ "$IMAGE_DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
           [[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]
@@ -68,13 +208,19 @@ jobs:
           test -n "$SMOKE_URL"
 
       - name: Set up kubectl
+        if: ${{ !inputs.validation_only }}
         uses: azure/setup-kubectl@v4
 
       - name: Set up Helm
+        if: ${{ !inputs.validation_only }}
         uses: azure/setup-helm@v4
 
       - name: Configure cluster access
+        if: ${{ !inputs.validation_only }}
         shell: bash
+        env:
+          KUBECONFIG_DATA: ${{ secrets.KUBECONFIG }}
+          HELM_VALUES_YAML: ${{ secrets.HELM_VALUES_YAML }}
         run: |
           umask 077
           printf '%s' "$KUBECONFIG_DATA" > "$KUBECONFIG"
@@ -82,9 +228,11 @@ jobs:
           helm lint helm/nestjs-backend-starter -f <(printf '%s' "$HELM_VALUES_YAML")
 
       - name: Deploy by digest and wait for migration and rollout
+        if: ${{ !inputs.validation_only }}
         shell: bash
         env:
           IMAGE_DIGEST: ${{ inputs.image_digest }}
+          HELM_VALUES_YAML: ${{ secrets.HELM_VALUES_YAML }}
         run: |
           umask 077
           printf '%s' "$HELM_VALUES_YAML" > "$RUNNER_TEMP/values.yaml"
@@ -98,6 +246,7 @@ jobs:
             --namespace "$KUBE_NAMESPACE" --timeout=5m
 
       - name: Verify migration Job succeeded
+        if: ${{ !inputs.validation_only }}
         id: migration
         shell: bash
         run: |
@@ -109,13 +258,17 @@ jobs:
           echo "job=$job" >> "$GITHUB_OUTPUT"
 
       - name: Smoke test deployed endpoint
+        if: ${{ !inputs.validation_only }}
         shell: bash
+        env:
+          SMOKE_URL: ${{ vars.SMOKE_URL }}
         run: |
           status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' --max-time 30 "$SMOKE_URL")"
           [[ "$status" =~ ^2[0-9]{2}$ ]]
           echo "Smoke test returned HTTP $status"
 
       - name: Record deployment evidence
+        if: ${{ !inputs.validation_only }}
         id: record
         shell: bash
         env:
@@ -150,6 +303,7 @@ jobs:
           echo "READY_REPLICAS=$ready" >> "$GITHUB_ENV"
 
       - name: Upload deployment record
+        if: ${{ !inputs.validation_only }}
         uses: actions/upload-artifact@v4
         with:
           name: deployment-${{ inputs.environment }}-${{ github.run_id }}

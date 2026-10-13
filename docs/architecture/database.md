@@ -47,7 +47,7 @@ PostgreSQL RLS is not required initially. Explain how it may be added as defense
 
 ## Backup and restore verification
 
-Document managed PostgreSQL backup/PITR configuration, retention, encryption, access control, and explicit business-approved RPO/RTO. M020 verifies that the documented restore procedure works against a disposable isolated PostgreSQL instance using synthetic data, including migration-state validation, application smoke checks, elapsed recovery time, and observed data-loss window. This checks the reusable procedure and does not verify a managed provider's backup control plane or PITR behavior. M022 requires an actual managed PostgreSQL backup/PITR restore rehearsal and recorded evidence before project completion.
+Document backup/PITR configuration, retention, encryption, access control, and explicit business-approved RPO/RTO for adopting environments. M020 and M022 verify the reusable restore procedure against disposable isolated PostgreSQL instances using synthetic data, including migration-state validation and application smoke checks. These checks do not verify a managed provider's backup control plane or PITR behavior. Managed PostgreSQL PITR and production disaster recovery are consumer deployment requirements, not template completion criteria.
 
 ## Source truncation
 

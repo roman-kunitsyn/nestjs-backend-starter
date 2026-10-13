@@ -1,57 +1,49 @@
-# ADR-002 — Separate template verification from production deployment evidence
+# ADR-002 — Separate template verification from consumer deployment evidence
 
 **Status:** Accepted
 **Date:** 2026-10-13
+**Amended:** 2026-10-13
 
 ## Context
 
-M020 currently requires a staging deployment and a managed PostgreSQL restore rehearsal before the starter can advance to M021. The chart and recovery runbook are reusable template artifacts, while staging credentials, a Kubernetes service, ingress/DNS/TLS, and managed-database backup facilities belong to an adopting application's environment. M020 is blocked because those external environments are not configured. Treating their absence as a blocker prevents local verification of the template itself; treating local tests as production evidence would make an unsupported claim.
+This repository is a reusable, cloud-provider-neutral application starter. Its purpose is to provide production-oriented application, container, Helm, Kubernetes security, CI/CD, and operations artifacts. Requiring a named cloud provider, purchased managed services, real credentials, or a live production-like cluster to complete the template would make completion depend on each adopter's infrastructure. Conversely, local tests must not be described as evidence that a provider's production controls work.
 
-The project goal remains a production-oriented reusable starter. Security controls, rollout safety, backup/PITR requirements, and the requirement for real production-like evidence are retained. The amendment changes where each kind of evidence is required and what it proves.
+The earlier ADR-002 wording assigned actual staging deployment and managed PostgreSQL PITR to M022. That boundary is superseded by this amendment. Production safeguards and consumer deployment responsibilities remain required when an adopter deploys the template.
 
 ## Decision
 
-1. **M020 template-level verification:** require an ephemeral Kubernetes cluster created with kind or k3d and an isolated, disposable PostgreSQL instance. Verify chart install and upgrade with healthy rolling replacement, migration Job ordering and failure diagnosis, startup/readiness/liveness and shutdown drain behavior, configured TLS and external Secret references, restrictive pod/network policy behavior, application image rollback with a schema-compatible prior image, and the documented backup/restore procedure against the isolated database. Capture commands and results without production credentials or data. Do not describe this as a production deployment or managed-service PITR test.
-2. **M022 environment-specific acceptance:** retain actual staging deployment evidence for production-like Kubernetes, ingress TLS, external secret delivery, migration, rollout, smoke, and image rollback. Retain an actual managed PostgreSQL backup/PITR restore rehearsal and record the recovery point, observed RPO/RTO, schema/migration validation, smoke result, and operator. These gates remain required before project status can become `completed`.
-3. **Security and reliability invariants:** retain non-root/restricted pods, least-privilege service accounts and network policy, secret externalization, no public operational endpoints, bounded database connection budgets, separate one-shot migrations, expand/contract compatibility, no automatic schema rollback, backup encryption/access control, and explicit RPO/RTO ownership. Local fixtures must use isolated throwaway resources and synthetic credentials/data.
+1. **M020 — reusable deployment capability:** verify the Helm chart and recovery procedure with kind or k3d and an isolated disposable PostgreSQL instance. Use synthetic data and temporary credentials. Verify install/upgrade, migration ordering and failure diagnosis, probes and shutdown drain, TLS and external Secret references, Kubernetes security controls, smoke behavior, compatible-image rollback, and database backup/restore. Label results template-level; do not claim provider or production evidence.
+2. **M021 — CI/CD and repository governance:** verify GitHub CI, versioned GHCR publishing, immutable image identity and integrity, SBOM, provenance, dependency/image security checks, active GitHub repository rulesets, staging/production environment governance, and deployment workflow safety. Verify protection policy configuration, not that real clusters, credentials, kubeconfigs, external Helm values, DNS, or public smoke endpoints have been provisioned. Actual environment inputs are consumer deployment-time responsibilities.
+3. **M022 — final integrated template acceptance:** use a fresh disposable local kind or k3d cluster and a fresh disposable PostgreSQL instance populated only with synthetic data. Verify Helm install and upgrade, migrations, startup/readiness/liveness probes, local smoke checks, application rollback to a compatible image, database backup and restore, Kubernetes security controls, and documentation consistency. Run the applicable complete code quality, security, and progress checks. Record commands and outcomes as local template verification.
+4. **Consumer deployment responsibilities:** the adopting application supplies provider-specific infrastructure, real environment credentials and kubeconfig or workload identity, external Helm values and Secret references, DNS, publicly reachable or runner-reachable smoke endpoints, production TLS/DNS, managed PostgreSQL PITR, provider-specific hardening, live cloud deployments, and production disaster recovery. Exact input contracts and procedures belong in operations documentation. These are not template completion criteria.
+5. **Production safety remains part of the template:** preserve production-oriented Helm defaults, least-privilege Kubernetes controls, externalized secrets, protected GitHub environments, immutable digest deployment, migration ordering, rollout and smoke gates, application recovery, backup/PITR guidance, and operational runbooks. Do not weaken these controls to accommodate local verification.
 
-## M020 acceptance boundary
+## M021/M022 acceptance boundary
 
-Replace M020's staging-only acceptance item with:
+M021's acceptance is about GitHub-side controls and artifacts. Repository rulesets must protect the default branch and version tags. Staging and production environments must have distinct governance and deployment-ref restrictions appropriate to their roles; production requires reviewers and a ref policy limited to approved release refs. Verify administrator bypass is disabled for production protection where GitHub exposes that setting, and inspect bypass actors on repository rulesets. M021 does not require environment secret values or a successful deployment dispatch. A finding that a required governance rule is absent or cannot be verified remains an M021 blocker. The read-only commands and manual fallback are in `docs/operations/github-governance.md`.
 
-> An ephemeral kind or k3d cluster verifies install, healthy rolling upgrade, probe and shutdown drain behavior, migration Job ordering and failure diagnosis, TLS and external Secret references, applicable security policies, smoke checks, and rollback to a schema-compatible image. A disposable isolated PostgreSQL instance verifies the documented backup/restore procedure, migration state, and application smoke checks. Results identify these as template-level tests and do not claim managed-service PITR or production deployment verification.
+The deployment workflow's expected consumer configuration remains documented: `KUBECONFIG` (or provider-specific short-lived OIDC/workload identity setup), `HELM_VALUES_YAML`, and `SMOKE_URL`, with optional `KUBE_NAMESPACE` and `HELM_RELEASE_NAME`. Their values must be supplied separately for each adopting environment and must not be fabricated for template verification. DNS, TLS certificates, external application Secrets, database access, and runner network reachability are likewise deployment prerequisites.
 
-Add an M020 note that real staging deployment and managed-service PITR evidence are reserved for M022 and remain mandatory there. Update Stage 09 exit criteria to require reproducible template-level deployment/recovery verification; keep production-like deployment and managed recovery evidence as M022 final acceptance gates.
+Acceptance separates template evidence from adopter evidence: local kind/k3d and disposable PostgreSQL results, GitHub policy configuration, hosted CI/release artifacts, and workflow safety are template evidence; real staging/production deployments, cloud credentials, managed PostgreSQL PITR, and production disaster recovery are adopter evidence. No adopter evidence is implied by a template check.
 
-## Affected documents
-
-- `docs/implementation/milestones/M020-kubernetes-deployment.md`
-- `docs/implementation/stages/stage-09-production-deployment.md`
-- `docs/implementation/roadmap.md`
-- `docs/implementation/milestones/M022-final-acceptance.md`
-- `docs/architecture/deployment.md`
-- `docs/architecture/database.md`
-- `docs/implementation/requirements-matrix.md`
-- `docs/decisions/README.md`
-
-The source architecture reference remains unchanged. This is a verification-boundary amendment, not a removal of source requirements: production-like deployment and managed recovery remain explicit final acceptance requirements.
+M022 runs the integrated chart and recovery checks against newly created local resources. It validates TLS and Secret wiring with synthetic local fixtures where needed, and uses a local port-forward or cluster-local path for smoke requests. It does not require DNS or public ingress reachability. Managed PostgreSQL PITR and production disaster recovery are documented consumer requirements; local dump/restore verifies the reusable runbook only.
 
 ## Consequences
 
-- M020 can be verified using reproducible local infrastructure and completed without claiming external production evidence.
-- M021 may begin only after all revised M020 template-level criteria pass.
-- M022 remains blocked from project completion until actual staging and managed PostgreSQL recovery evidence passes.
-- Progress records will reflect the revised gates only after the amendment is approved and M020 evidence is collected.
+- M021 and M022 can complete without choosing a cloud provider or provisioning paid or live cloud infrastructure.
+- GitHub governance and workflow safeguards remain verifiable acceptance requirements; environment credentials and endpoint availability do not.
+- M022 provides integrated evidence for the reusable template in reproducible disposable local infrastructure.
+- Adopters still need provider-specific security, TLS/DNS, database recovery, and deployment verification before production use.
+- Earlier ADR-002 addendum statements requiring M022 actual staging or managed PITR evidence are superseded by this decision.
 
-## M021/M022 responsibility addendum — 2026-10-13
+## Affected documents
 
-The project owner approved the following clarification on 2026-10-13:
-
-- **M021 — CI/CD and Release Safety** verifies GitHub Actions CI execution; tagged release publishing to GHCR; published artifact identity and integrity; SBOM/provenance and dependency/image security checks; GitHub staging/production environment configuration; production environment protection; and release/deployment workflow safety. M021 verifies the deployment workflow's configuration and safety behavior, including digest selection, environment isolation, concurrency, migration ordering, rollout/health/smoke gates, deployment records, and digest-based application recovery without schema rollback. M021 does not require dispatching a deployment to staging or claiming staging deployment evidence.
-- **M022 — Final Acceptance** verifies actual production-like staging deployment behavior, including external secrets, TLS, migrations, rollout, health probes, smoke tests, and rollback, plus managed PostgreSQL backup/PITR recovery evidence. These remain mandatory project-completion gates.
-
-This addendum removes the M021 staging-execution prerequisite while retaining GitHub-side configuration and workflow-safety requirements. Update M021/M022 contracts, Stage 09/10 documentation, requirements traceability, and the M021 blocker record to reflect this boundary. No staging or production deployment is implied by this planning clarification.
+- `docs/architecture/deployment.md` and `docs/architecture/database.md`
+- `docs/implementation/definition-of-done.md`, `roadmap.md`, and `requirements-matrix.md`
+- `docs/implementation/stages/stage-09-production-deployment.md` and `stage-10-final-verification.md`
+- `docs/implementation/milestones/M020-kubernetes-deployment.md`, `M021-cicd.md`, and `M022-final-acceptance.md`
+- `docs/operations/github-actions.md`, `github-governance.md`, `kubernetes.md`, `migrations.md`, and `releases.md`
 
 ## Approval
 
-Approved explicitly by the project owner on 2026-10-13. The M020 template-level tests, M021/M022 responsibility boundary, and M022 environment-specific gates are now the governing planning amendments.
+The project owner approved this amendment on 2026-10-13. It governs the M021/M022 infrastructure acceptance boundary and supersedes conflicting prior M021/M022 wording in this ADR.

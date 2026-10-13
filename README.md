@@ -862,6 +862,8 @@ GitHub Actions workflows:
 └── deploy.yml
 ```
 
+Operational procedures: [run and troubleshoot CI](docs/operations/github-actions.md), [create a versioned release and verify GHCR digest/SBOM/provenance/scans](docs/operations/releases.md), and [configure GitHub environments and protection rules](docs/operations/github-governance.md). Deployment, rollback, and database recovery are in [Kubernetes operations](docs/operations/kubernetes.md) and [database migrations](docs/operations/migrations.md).
+
 ### Continuous integration
 
 Pull requests must pass:

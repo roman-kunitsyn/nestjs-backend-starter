@@ -18,13 +18,13 @@ After the upgrade, verify `kubectl rollout status deployment/<release>-nestjs-ba
 
 ## Backup and recovery
 
-Use the managed PostgreSQL provider's encrypted automated backups and point-in-time recovery (PITR), with retention and access controls aligned to the service's data classification. Set an explicit business-approved RPO/RTO per environment; no universal numeric target is claimed by this starter. Before a release, record the recovery point and verify the provider reports backups healthy. A restore rehearsal must restore into an isolated database, validate schema/migration state and application smoke checks, record elapsed recovery time and data-loss window, then securely delete the rehearsal environment. Record date, database version, backup identifier, RPO/RTO observed, and operator in the deployment evidence log before final project acceptance. A backup configuration alone does not count as a restore test.
+For an adopting deployment, configure the managed PostgreSQL provider's encrypted automated backups and point-in-time recovery (PITR), retention, access controls, and explicit business-approved RPO/RTO. No universal numeric target is claimed by this starter. Before a production release, record the recovery point and verify the provider reports backups healthy. A consumer restore rehearsal should restore into an isolated database, validate schema/migration state and application smoke checks, record elapsed recovery time and data-loss window, then securely delete the rehearsal environment. Record date, database version, backup identifier, observed RPO/RTO, and operator in the adopter's deployment evidence. This provider-specific rehearsal is not a template completion gate.
 
 ## M020 template-level verification
 
 Use an ephemeral kind or k3d cluster and a separate disposable PostgreSQL instance containing synthetic data and temporary credentials. Exercise chart installation and upgrade, migration hook ordering and failure diagnosis, readiness/shutdown draining, TLS and external Secret references, NetworkPolicy and pod security controls, application smoke checks, and rollback to a schema-compatible image. Destroy the cluster and database after capturing sanitized command output and results. These checks verify the reusable chart and runbook; they do not verify a production Kubernetes service, production secret manager, managed PostgreSQL backup control plane, or PITR.
 
-For the database runbook check, apply the checked-in migrations to the disposable database, add a synthetic recovery marker, create a custom-format dump, and restore it into a new empty database on the isolated instance. With the PostgreSQL client tools available inside the disposable database pod, the core operations are:
+For M020/M022 template verification, provision a fresh disposable PostgreSQL instance, apply the checked-in migrations, add a synthetic recovery marker, create a custom-format dump, and restore it into a new empty database on that instance. With the PostgreSQL client tools available inside the disposable database pod, the core operations are:
 
 ```sh
 psql -U app -d app -c "CREATE TABLE m020_recovery_marker (marker text PRIMARY KEY, written_at timestamptz NOT NULL DEFAULT now()); INSERT INTO m020_recovery_marker(marker) VALUES ('synthetic-restore-check');"
@@ -34,11 +34,60 @@ pg_restore --no-owner -U app -d app_restored /tmp/backup.dump
 psql -U app -d app_restored -c 'SELECT marker FROM m020_recovery_marker; SELECT count(*) FROM drizzle.__drizzle_migrations;'
 ```
 
-Confirm the migration journal and marker, then run the app readiness/smoke check against the restored database. Record dump/recovery timestamps and observed recovery duration/data-loss window. Never use production credentials or data. M022 still requires an actual managed-service backup/PITR restore rehearsal and actual staging evidence.
+Confirm the migration journal and marker, then run the app readiness/smoke check against the restored database. Record dump/recovery timestamps and observed recovery duration/data-loss window. Never use production credentials or data. This verifies the reusable local restore procedure; it does not establish managed-service PITR or production disaster recovery.
 
 ## Staging evidence status
 
-For each actual staging rollout record cluster/context (without credentials), chart version, image digest, migration Job result, Helm revision, ready replicas, startup/readiness/liveness behavior, TLS and smoke results, shutdown/drain result, rollback result, and any deviations. No actual production-like staging deployment or managed PostgreSQL PITR rehearsal is claimed by M020's local kind/k3d and isolated-database tests. Complete and attach this environment-specific evidence in M022 before project acceptance.
+For a consumer's actual staging rollout, record cluster/context (without credentials), chart version, image digest, migration Job result, Helm revision, ready replicas, startup/readiness/liveness behavior, TLS and smoke results, shutdown/drain result, rollback result, and deviations. M020/M022 local kind/k3d and isolated-database tests do not claim actual staging or managed PostgreSQL PITR evidence. This environment-specific evidence belongs to the adopting application's deployment process, not template completion.
+
+## Deployment and application rollback quick procedure
+
+### Prerequisites
+
+- `kubectl` configured for the intended cluster/namespace, Helm 3, and access to the registry image by digest.
+- The namespace, ingress/TLS, externally managed Secret, database, and reviewed environment values already exist.
+- A database backup/recovery point has been checked and the release migration is compatible with both the current and target application versions.
+- Use a schema-compatible image digest for application rollback. Never use image rollback as a database rollback.
+
+### Deploy and verify
+
+```bash
+helm lint helm/nestjs-backend-starter -f ./environment-values.yaml
+helm upgrade --install nestjs-backend-starter helm/nestjs-backend-starter \
+  --namespace staging --create-namespace \
+  --values ./environment-values.yaml \
+  --set-string image.repository=ghcr.io/roman-kunitsyn/nestjs-backend-starter \
+  --set-string image.digest=sha256:REPLACE_WITH_64_HEX_DIGEST \
+  --wait --wait-for-jobs --timeout 10m
+kubectl rollout status deployment/nestjs-backend-starter-nnestjs-backend-starter \
+  --namespace staging --timeout=5m
+kubectl get jobs -n staging \
+  -l app.kubernetes.io/instance=nestjs-backend-starter,app.kubernetes.io/component=migration
+kubectl get pods -n staging -l app.kubernetes.io/instance=nestjs-backend-starter -o wide
+```
+
+Expected: `helm lint` succeeds; Helm waits for the pre-upgrade migration hook and rollout; rollout reports success; the migration Job is complete; expected replicas are ready. Replace sample environment inputs with verified values. For GitHub deployment, use the protected workflow and digest recorded by the release run; see [GitHub governance](github-governance.md).
+
+### Roll back application code
+
+```bash
+helm history nestjs-backend-starter --namespace staging
+helm rollback nestjs-backend-starter REVISION --namespace staging --wait --timeout 10m
+kubectl rollout status deployment/nestjs-backend-starter-nnestjs-backend-starter \
+  --namespace staging --timeout=5m
+helm status nestjs-backend-starter --namespace staging
+```
+
+Expected: Helm reports a new rollback revision and the Deployment converges to ready replicas on the prior compatible image. In GitHub deployment, rollback is a new protected dispatch with the prior verified image digest. The workflow does not roll back automatically and never reverses migrations.
+
+### Troubleshooting and manual verification
+
+- Helm times out or the migration Job fails: `kubectl get jobs,pods -n staging`; `kubectl describe job JOB_NAME -n staging`; `kubectl logs job/JOB_NAME -n staging`. Check database connectivity, credentials, and migration journal before retrying.
+- Pods do not become ready: `kubectl describe pod POD_NAME -n staging`; `kubectl logs deployment/nestjs-backend-starter-nnestjs-backend-starter -n staging --all-containers=true`; inspect events and readiness configuration.
+- Rollback is unsafe: stop and review schema compatibility; restore/repair data through the database recovery procedure rather than reversing migrations automatically.
+- Before calling deployment successful, manually verify immutable digest in Helm values and the running pod image, migration Job completion, rollout status, readiness, ingress/TLS, and application smoke response. Record digest, Helm revision, migration Job, ready replicas, and smoke result.
+
+Database restore and migration verification are documented in [Database migrations](migrations.md#backup-restore-verification-and-troubleshooting).
 
 ## GitHub Actions release and deployment
 
@@ -53,4 +102,4 @@ To enable deployment, create GitHub environments named `staging` and `production
 
 Set required reviewers and deployment branch restrictions on `production`; GitHub environment protection pauses the deployment job before environment secrets are made available. Keep the staging environment independently scoped, with different cluster credentials, secret references, database, and network. Dispatch `Deploy image` with the release version, full source commit SHA, and exact `sha256:` digest from the publish run. Jobs serialize on `deploy-staging` or `deploy-production`, wait for Helm's migration hook and application rollout, verify the labeled migration Job, then run the smoke URL. Each successful run summary and 90-day artifact records source commit, deployment workflow commit, version, exact image digest, migration Job, Helm revision, ready replica count, and smoke result.
 
-The workflow leaves failed releases available for inspection; it does not use Helm's automatic rollback and never reverses a database migration. To roll back application code, dispatch a previously recorded schema-compatible digest through the same protected environment after reviewing migration compatibility. Diagnose or repair schema changes separately. An actual production-like staging run and managed PostgreSQL restore rehearsal remain M022 acceptance evidence.
+The workflow leaves failed releases available for inspection; it does not use Helm's automatic rollback and never reverses a database migration. To roll back application code, dispatch a previously recorded schema-compatible digest through the same protected environment after reviewing migration compatibility. Diagnose or repair schema changes separately. M022 validates application rollback locally; actual cloud deployment and managed PostgreSQL recovery remain adopter responsibilities.
