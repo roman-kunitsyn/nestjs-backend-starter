@@ -43,6 +43,15 @@ The source architecture reference remains unchanged. This is a verification-boun
 - M022 remains blocked from project completion until actual staging and managed PostgreSQL recovery evidence passes.
 - Progress records will reflect the revised gates only after the amendment is approved and M020 evidence is collected.
 
+## M021/M022 responsibility addendum — 2026-10-13
+
+The project owner approved the following clarification on 2026-10-13:
+
+- **M021 — CI/CD and Release Safety** verifies GitHub Actions CI execution; tagged release publishing to GHCR; published artifact identity and integrity; SBOM/provenance and dependency/image security checks; GitHub staging/production environment configuration; production environment protection; and release/deployment workflow safety. M021 verifies the deployment workflow's configuration and safety behavior, including digest selection, environment isolation, concurrency, migration ordering, rollout/health/smoke gates, deployment records, and digest-based application recovery without schema rollback. M021 does not require dispatching a deployment to staging or claiming staging deployment evidence.
+- **M022 — Final Acceptance** verifies actual production-like staging deployment behavior, including external secrets, TLS, migrations, rollout, health probes, smoke tests, and rollback, plus managed PostgreSQL backup/PITR recovery evidence. These remain mandatory project-completion gates.
+
+This addendum removes the M021 staging-execution prerequisite while retaining GitHub-side configuration and workflow-safety requirements. Update M021/M022 contracts, Stage 09/10 documentation, requirements traceability, and the M021 blocker record to reflect this boundary. No staging or production deployment is implied by this planning clarification.
+
 ## Approval
 
-Approved explicitly by the project owner on 2026-10-13. The M020 template-level tests and M022 environment-specific gates are now the governing planning amendment.
+Approved explicitly by the project owner on 2026-10-13. The M020 template-level tests, M021/M022 responsibility boundary, and M022 environment-specific gates are now the governing planning amendments.

@@ -8,5 +8,6 @@
 
 - Every approved requirement has evidence in the traceability matrix.
 - Required unit/integration/E2E/contract/build/security/Helm/staging and operational restore checks pass under the global definition of done.
+- Actual production-like staging deployment and managed PostgreSQL PITR evidence pass; M021 GitHub Actions, GHCR artifact, environment configuration, and workflow-safety evidence is reviewed but does not substitute for staging outcomes.
 - Documentation reflects actual behavior; no unresolved release-blocking defect remains.
 - Progress and stage records agree; project is marked completed only after every acceptance criterion passes.

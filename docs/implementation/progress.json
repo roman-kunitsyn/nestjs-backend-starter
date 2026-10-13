@@ -525,7 +525,7 @@
         "M020"
       ],
       "contract": "milestones/M021-cicd.md",
-      "blocker": "Rechecked 2026-10-13: GitHub access is unavailable (no Git remote configured; gh auth status reports an invalid saved token), and staging credentials/environment configuration are absent. GitHub environment protection and staging deployment remain unverifiable."
+      "blocker": "Rechecked 2026-10-13 after the approved ADR-002 addendum: no Git remote is configured and gh auth status reports an invalid saved token. GitHub Actions CI/release execution, GHCR artifact verification, and staging/production environment and protection settings remain unverifiable. Actual staging deployment is an M022 gate, not an M021 prerequisite."
     },
     {
       "id": "M022",

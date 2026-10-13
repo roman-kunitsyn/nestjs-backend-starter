@@ -23,6 +23,10 @@ Review and validate the complete implementation against every approved requireme
 
 - [Global definition of done](../definition-of-done.md), [requirements matrix](../requirements-matrix.md), all architecture documents and `AGENTS.md` §17.
 
+## CI/CD and deployment evidence boundary
+
+M021 verifies GitHub Actions CI execution, tagged GHCR publication and artifact evidence, GitHub environment/protection configuration, and release/deployment workflow safety. M022 verifies the outcome in an actual production-like staging environment; local kind/k3d checks or M021 workflow configuration do not substitute for that evidence. Managed PostgreSQL backup/PITR recovery also remains an M022 gate under [ADR-002](../../decisions/ADR-002-template-versus-production-verification.md).
+
 ## Deliverables
 
 - Final verification record, reconciled docs/matrix, completed progress state, and project acceptance report.
