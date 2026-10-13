@@ -17,4 +17,4 @@ Passwords use Argon2id (19 MiB memory, two iterations, one lane); successful log
 
 ## Dependency and image scanning
 
-Run `pnpm security:audit` before release and resolve or explicitly triage reported advisories. Keep the lockfile frozen in builds. The `pnpm security:scan-image` hook uses Trivy against `nestjs-backend-starter:local`; install Trivy and run it after building that image in M019. Image scanning was not run in M017 because the production image does not exist, and Trivy is not available in the current environment. CI enforcement is scheduled in M021.
+Run `pnpm security:audit` before release and resolve or explicitly triage reported advisories. Keep the lockfile frozen in builds. `pnpm image:scan` and `pnpm security:scan-image` use Trivy against `nestjs-backend-starter:local` and fail on HIGH or CRITICAL vulnerabilities with a published fix. The scan uses `--ignore-unfixed` because the pinned Debian runtime can contain advisories with no fixed package release; run Trivy without that option to review all findings and record their disposition. Recheck ignored-unfixed findings when the base digest changes. CI enforcement is scheduled in M021.

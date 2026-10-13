@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7@sha256:a57df69d0ea827fb7266491f2813635de6f17269be881f696fbfdf2d83dda33e
 
-ARG NODE_IMAGE=node:24.21.0-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20
+ARG NODE_IMAGE=node:24.21.0-trixie-slim@sha256:173f125896c3b47ddf056734c7ea789d04595a6a08769a8f78e0df642781fb66
 
 FROM ${NODE_IMAGE} AS base
 ENV PNPM_HOME="/pnpm"
@@ -34,6 +34,11 @@ LABEL org.opencontainers.image.title="nestjs-backend-starter" \
       org.opencontainers.image.revision=$VCS_REF \
       org.opencontainers.image.version=$VERSION
 WORKDIR /app
+RUN rm -rf \
+    /usr/local/lib/node_modules/npm \
+    /usr/local/lib/node_modules/corepack \
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+    /usr/local/bin/yarn /usr/local/bin/yarnpkg /opt/yarn-v1.22.22
 COPY --from=production-dependencies --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/dist ./dist
 COPY --from=build --chown=node:node /app/package.runtime.json ./package.json

@@ -57,7 +57,7 @@ Build the multi-stage production image with the pinned Node 24 patch release and
 pnpm image:build
 ```
 
-The runtime stage contains `dist`, `package.json`, and production dependencies only. It runs as the unprivileged `node` user and starts `node dist/main.js`; it does not run migrations. Supply production configuration through your deployment's secret mechanism. Required production JWT, refresh, cursor, database, and SMTP settings are validated at startup. Never bake an env file or credentials into the image.
+The runtime stage contains `dist`, `package.json`, and production dependencies only. It removes npm, Corepack, and Yarn from the official base because the running application needs only Node.js. It runs as the unprivileged `node` user and starts `node dist/main.js`; it does not run migrations. Supply production configuration through your deployment's secret mechanism. Required production JWT, refresh, cursor, database, and SMTP settings are validated at startup. Never bake an env file or credentials into the image.
 
 For a local container smoke check, start the disposable database and run the helper. It generates temporary production-format signing secrets in memory, binds an ephemeral localhost port, starts the container with `--read-only` and a small `/tmp` tmpfs, verifies readiness and the production-only runtime contents, and checks that SIGTERM exits cleanly. It never writes test secrets to disk. Set `IMAGE_SMOKE_DATABASE_URL` to override the default Docker Desktop host connection.
 

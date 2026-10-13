@@ -2,9 +2,9 @@
 
 > Generated from `progress.json` by `pnpm progress:dashboard`. Do not edit by hand.
 
-**Project status:** blocked
+**Project status:** in_progress
 **Current stage:** Stage 09 — Production Deployment
-**Next milestone:** M019 — Production Docker Image (blocked)
+**Next milestone:** M020 — Helm and Kubernetes Operations (pending)
 
 ## Stage 00 — Preparation
 

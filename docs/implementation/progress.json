@@ -1,8 +1,8 @@
 {
   "project": {
-    "status": "blocked",
+    "status": "in_progress",
     "current_stage": "Stage 09 — Production Deployment",
-    "next_milestone": "M019"
+    "next_milestone": "M020"
   },
   "stages": [
     {
@@ -480,11 +480,20 @@
       "id": "M019",
       "title": "Production Docker Image",
       "stage": "stage-09",
-      "status": "blocked",
+      "status": "completed",
       "dependencies": [
         "M018"
       ],
-      "contract": "milestones/M019-docker-image.md"
+      "contract": "milestones/M019-docker-image.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Pinned Node 24.21.0 Trixie digest; frozen-lockfile production image built at 103,850,232 bytes with non-root user and no npm/Corepack/Yarn",
+          "Read-only image smoke passed with startup/readiness and SIGTERM shutdown; OCI metadata and runtime contents inspected",
+          "Trivy HIGH/CRITICAL gate passed for advisories with published fixes; unfiltered scan triaged eight HIGH Debian advisories with no published fixes and zero CRITICAL findings",
+          "Lint, format check, strict typecheck, 38 unit tests, 10 PostgreSQL integration tests, 22 Fastify E2E tests, and Nest build passed"
+        ]
+      }
     },
     {
       "id": "M020",
