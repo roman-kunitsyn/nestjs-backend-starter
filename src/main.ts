@@ -14,10 +14,15 @@ import {
   API_BODY_LIMIT_BYTES,
   configureApiRouting,
 } from './common/api-routing.js';
+import { configureHttpSecurity } from './common/http/security.js';
+import { parseTrustedProxyList } from './config/environment.js';
 
 const app = await NestFactory.create<NestFastifyApplication>(
   AppModule,
-  createHttpAdapter(API_BODY_LIMIT_BYTES),
+  createHttpAdapter(
+    API_BODY_LIMIT_BYTES,
+    parseTrustedProxyList(process.env.HTTP_TRUSTED_PROXY_CIDRS ?? ''),
+  ),
   { bufferLogs: true },
 );
 const config = app.get(ConfigService<EnvironmentConfig>);
@@ -25,6 +30,7 @@ const config = app.get(ConfigService<EnvironmentConfig>);
 configureApiRouting(app);
 configureRequestCorrelation(app);
 app.useLogger(app.get(PinoLogger));
+await configureHttpSecurity(app, config);
 const openApi = createOpenApiDocument(app);
 setupOpenApi(
   app,

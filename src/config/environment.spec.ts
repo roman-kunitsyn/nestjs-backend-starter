@@ -6,6 +6,16 @@ describe('environment configuration', () => {
       NODE_ENV: 'development',
       APP_NAME: 'nestjs-backend-starter',
       APP_HOST: '127.0.0.1',
+      HTTP_CORS_ORIGINS: '',
+      HTTP_TRUSTED_PROXY_CIDRS: '',
+      HTTP_RATE_LIMIT_MAX: 120,
+      HTTP_RATE_LIMIT_WINDOW_MS: 60000,
+      AUTH_LOGIN_RATE_LIMIT_MAX: 5,
+      AUTH_REGISTER_RATE_LIMIT_MAX: 3,
+      AUTH_RECOVERY_RATE_LIMIT_MAX: 3,
+      AUTH_REFRESH_RATE_LIMIT_MAX: 20,
+      AUTH_SENSITIVE_RATE_LIMIT_MAX: 5,
+      AUTH_REFRESH_COOKIE_SAME_SITE: 'lax',
       PORT: 3000,
       API_DOCS_ENABLED: true,
       DATABASE_URL:
@@ -93,6 +103,24 @@ describe('environment configuration', () => {
       PORT: 4317,
       APP_HOST: '0.0.0.0',
     });
+  });
+
+  it('parses explicit browser origins and proxy ranges without accepting wildcard CORS', () => {
+    expect(
+      validateEnvironment({ HTTP_CORS_ORIGINS: 'https://app.example.com' })
+        .HTTP_CORS_ORIGINS,
+    ).toBe('https://app.example.com');
+    expect(() => validateEnvironment({ HTTP_CORS_ORIGINS: '*' })).toThrow();
+    expect(
+      validateEnvironment({ HTTP_TRUSTED_PROXY_CIDRS: '10.0.0.0/8' })
+        .HTTP_TRUSTED_PROXY_CIDRS,
+    ).toBe('10.0.0.0/8');
+    expect(() =>
+      validateEnvironment({ HTTP_TRUSTED_PROXY_CIDRS: '10.0.0.0/99' }),
+    ).toThrow('HTTP_TRUSTED_PROXY_CIDRS');
+    expect(() =>
+      validateEnvironment({ HTTP_TRUSTED_PROXY_CIDRS: '10.0.0.0/' }),
+    ).toThrow('HTTP_TRUSTED_PROXY_CIDRS');
   });
 
   it.each(['0', '65536', 'not-a-port'])(

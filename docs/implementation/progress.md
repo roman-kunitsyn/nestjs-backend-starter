@@ -4,7 +4,7 @@
 
 **Project status:** in_progress
 **Current stage:** Stage 08 — Security and Observability
-**Next milestone:** M017 — Application Security Controls (pending)
+**Next milestone:** M018 — Health and Observability (pending)
 
 ## Stage 00 — Preparation
 
@@ -27,7 +27,7 @@
 | 05 | Organizations and Authorization | M012–M014 | completed |
 | 06 | Email and Audit | M015 | completed |
 | 07 | Example Resource | M016 | completed |
-| 08 | Security and Observability | M017–M018 | pending |
+| 08 | Security and Observability | M017–M018 | in_progress |
 | 09 | Production Deployment | M019–M021 | pending |
 | 10 | Final Verification | M022 | pending |
 

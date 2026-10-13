@@ -37,10 +37,15 @@
     "progress:select": "node scripts/progress.mjs select",
     "progress:dashboard": "node scripts/progress.mjs dashboard",
     "progress:test": "node --test scripts/progress.test.mjs",
+    "security:audit": "pnpm audit --prod",
+    "security:scan-image": "trivy image --exit-code 1 --severity HIGH,CRITICAL nestjs-backend-starter:local",
     "openapi:generate": "pnpm build && node scripts/openapi.mjs generate",
     "openapi:check": "node scripts/openapi.mjs check"
   },
   "dependencies": {
+    "@fastify/cors": "^11.3.1",
+    "@fastify/helmet": "^13.1.2",
+    "@fastify/rate-limit": "^11.2.1",
     "@fastify/static": "^10.1.6",
     "@nestjs/common": "^12.0.1",
     "@nestjs/config": "^12.0.1",

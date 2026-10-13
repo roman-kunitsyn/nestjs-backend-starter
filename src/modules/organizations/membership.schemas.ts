@@ -22,7 +22,10 @@ export const invitationAcceptSchema = z
   .object({ token: z.string().min(32).max(128) })
   .strict();
 export const ownershipTransferSchema = z
-  .object({ membershipId: z.string().uuid() })
+  .object({
+    membershipId: z.string().uuid(),
+    currentPassword: z.string().min(1).max(256),
+  })
   .strict();
 
 export const memberResponseSchema = z.object({

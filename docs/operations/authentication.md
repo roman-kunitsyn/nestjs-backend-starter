@@ -10,7 +10,7 @@ The refresh cookie is `refresh_token`, `HttpOnly`, `SameSite=Lax`, host-only and
 
 Current identity and profile both use the public account projection today; they are separate routes so identity context and profile behavior can evolve independently.
 
-M011 does not yet provide CSRF token/origin enforcement or endpoint throttling. Those controls are assigned to M017; browser deployments should keep the documented same-site topology until then.
+M017 now requires an exact allowlisted `Origin` for requests carrying the refresh cookie, pairs it with the configured `SameSite=Lax` or `Strict` policy, and applies global plus endpoint-specific throttles. See [security operations](security.md) for browser-origin, ingress, and per-pod rate-limit configuration.
 
 M010 currently provides these public endpoints under `/api/v1`:
 

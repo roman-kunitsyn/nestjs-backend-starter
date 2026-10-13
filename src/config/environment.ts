@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isIP } from 'node:net';
 
 const EnvironmentInputSchema = z.object({
   NODE_ENV: z
@@ -6,6 +7,46 @@ const EnvironmentInputSchema = z.object({
     .default('development'),
   APP_NAME: z.string().trim().min(1).max(80).default('nestjs-backend-starter'),
   APP_HOST: z.string().trim().min(1).default('127.0.0.1'),
+  HTTP_CORS_ORIGINS: z.string().default(''),
+  HTTP_TRUSTED_PROXY_CIDRS: z.string().default(''),
+  HTTP_RATE_LIMIT_MAX: z.coerce.number().int().min(1).max(100000).default(120),
+  HTTP_RATE_LIMIT_WINDOW_MS: z.coerce
+    .number()
+    .int()
+    .min(1000)
+    .max(3600000)
+    .default(60000),
+  AUTH_LOGIN_RATE_LIMIT_MAX: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(10000)
+    .default(5),
+  AUTH_REGISTER_RATE_LIMIT_MAX: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(10000)
+    .default(3),
+  AUTH_RECOVERY_RATE_LIMIT_MAX: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(10000)
+    .default(3),
+  AUTH_REFRESH_RATE_LIMIT_MAX: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(10000)
+    .default(20),
+  AUTH_SENSITIVE_RATE_LIMIT_MAX: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(10000)
+    .default(5),
+  AUTH_REFRESH_COOKIE_SAME_SITE: z.enum(['lax', 'strict']).default('lax'),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   API_DOCS_ENABLED: z.preprocess(
     (value) => (value === 'true' ? true : value === 'false' ? false : value),
@@ -66,11 +107,58 @@ export const EnvironmentSchema = EnvironmentInputSchema.transform((config) => ({
 
 export type EnvironmentConfig = z.output<typeof EnvironmentSchema>;
 
+export function parseOriginList(value: string): string[] {
+  return value
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+    .map((origin) => {
+      const parsed = new URL(origin);
+      if (
+        parsed.origin !== origin ||
+        (parsed.protocol !== 'https:' && parsed.hostname !== 'localhost')
+      ) {
+        throw new Error(
+          'HTTP_CORS_ORIGINS entries must be exact HTTPS origins (localhost may use HTTP)',
+        );
+      }
+      return origin;
+    });
+}
+
+export function parseTrustedProxyList(value: string): string[] {
+  return value
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const [address, prefix, ...rest] = entry.split('/');
+      const version = address ? isIP(address) : 0;
+      const bits = prefix === undefined ? undefined : Number(prefix);
+      if (
+        rest.length > 0 ||
+        version === 0 ||
+        (prefix !== undefined && !/^\d+$/.test(prefix)) ||
+        (bits !== undefined &&
+          (!Number.isInteger(bits) ||
+            bits < 0 ||
+            bits > (version === 4 ? 32 : 128)))
+      ) {
+        throw new Error(
+          'HTTP_TRUSTED_PROXY_CIDRS entries must be IP addresses or valid CIDRs',
+        );
+      }
+      return entry;
+    });
+}
+
 export function validateEnvironment(
   config: Record<string, unknown>,
 ): EnvironmentConfig {
   const parsed = EnvironmentSchema.safeParse(config);
   if (parsed.success) {
+    parseOriginList(parsed.data.HTTP_CORS_ORIGINS);
+    parseTrustedProxyList(parsed.data.HTTP_TRUSTED_PROXY_CIDRS);
     if (
       parsed.data.NODE_ENV === 'production' &&
       (!parsed.data.AUTH_JWT_PRIVATE_KEY || !parsed.data.AUTH_JWT_PUBLIC_KEY)

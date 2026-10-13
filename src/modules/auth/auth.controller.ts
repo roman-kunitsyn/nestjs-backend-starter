@@ -40,11 +40,11 @@ const cookieValue = (request: FastifyRequest) => {
 const setCookie = (
   reply: FastifyReply,
   token: string | undefined,
-  options: { secure: boolean; maxAge: number },
+  options: { secure: boolean; maxAge: number; sameSite: 'lax' | 'strict' },
 ) => {
   const value = token
-    ? `${COOKIE}=${encodeURIComponent(token)}; Max-Age=${options.maxAge}; Path=/api/v1/auth; HttpOnly; SameSite=Lax${options.secure ? '; Secure' : ''}`
-    : `${COOKIE}=; Max-Age=0; Path=/api/v1/auth; HttpOnly; SameSite=Lax${options.secure ? '; Secure' : ''}`;
+    ? `${COOKIE}=${encodeURIComponent(token)}; Max-Age=${options.maxAge}; Path=/api/v1/auth; HttpOnly; SameSite=${options.sameSite[0]?.toUpperCase()}${options.sameSite.slice(1)}${options.secure ? '; Secure' : ''}`
+    : `${COOKIE}=; Max-Age=0; Path=/api/v1/auth; HttpOnly; SameSite=${options.sameSite[0]?.toUpperCase()}${options.sameSite.slice(1)}${options.secure ? '; Secure' : ''}`;
   reply.header('set-cookie', value);
 };
 

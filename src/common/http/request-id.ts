@@ -13,9 +13,13 @@ export function resolveRequestId(value: unknown): string {
   return `req_${randomUUID()}`;
 }
 
-export function createHttpAdapter(bodyLimit: number): FastifyAdapter {
+export function createHttpAdapter(
+  bodyLimit: number,
+  trustedProxyCidrs: string[] = [],
+): FastifyAdapter {
   return new FastifyAdapter({
     bodyLimit,
+    trustProxy: trustedProxyCidrs.length ? trustedProxyCidrs : false,
     genReqId: (request: FastifyRequest['raw']) =>
       resolveRequestId(request.headers['x-request-id']),
     logger: {

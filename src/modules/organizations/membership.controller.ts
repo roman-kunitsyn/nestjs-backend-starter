@@ -31,12 +31,16 @@ import {
   ownershipTransferSchema,
 } from './membership.schemas.js';
 import { MembershipService } from './membership.service.js';
+import { AuthService } from '../auth/auth.service.js';
 
 @ApiTags('Organization memberships and invitations')
 @ApiBearerAuth()
 @Controller()
 export class MembershipController {
-  constructor(private readonly memberships: MembershipService) {}
+  constructor(
+    private readonly memberships: MembershipService,
+    private readonly auth: AuthService,
+  ) {}
 
   @Get('organizations/:organizationId/members')
   @ApiOperation({
@@ -154,19 +158,26 @@ export class MembershipController {
   @ApiBody({
     schema: {
       type: 'object',
-      required: ['membershipId'],
-      properties: { membershipId: { type: 'string', format: 'uuid' } },
+      required: ['membershipId', 'currentPassword'],
+      properties: {
+        membershipId: { type: 'string', format: 'uuid' },
+        currentPassword: { type: 'string', format: 'password' },
+      },
       additionalProperties: false,
     },
   })
   @ApiOkResponse()
-  transfer(
+  async transfer(
     @Req() req: FastifyRequest,
     @Param('organizationId', new ZodValidationPipe(organizationIdSchema))
     orgId: string,
     @Body(new ZodValidationPipe(ownershipTransferSchema))
     body: typeof ownershipTransferSchema._output,
   ) {
+    await this.auth.confirmCurrentPassword(
+      req.identity!.userId,
+      body.currentPassword,
+    );
     return this.memberships.transferOwnership(
       req.identity!.userId,
       orgId,

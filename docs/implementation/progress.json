@@ -2,7 +2,7 @@
   "project": {
     "status": "in_progress",
     "current_stage": "Stage 08 — Security and Observability",
-    "next_milestone": "M017"
+    "next_milestone": "M018"
   },
   "stages": [
     {
@@ -81,7 +81,7 @@
     {
       "id": "stage-08",
       "title": "Security and Observability",
-      "status": "pending",
+      "status": "in_progress",
       "milestones": [
         "M017",
         "M018"
@@ -439,11 +439,22 @@
       "id": "M017",
       "title": "Application Security Controls",
       "stage": "stage-08",
-      "status": "pending",
+      "status": "completed",
       "dependencies": [
         "M016"
       ],
-      "contract": "milestones/M017-security-controls.md"
+      "contract": "milestones/M017-security-controls.md",
+      "completion": {
+        "date": "2026-10-13",
+        "verification": [
+          "Unit tests passed: 33 across 13 suites, including spoofed forwarded-IP rejection and explicit trusted-proxy handling",
+          "Fastify E2E passed: 21 tests across 2 suites, including Helmet/CORS, exact refresh Origin enforcement, endpoint login throttling, password-confirmed ownership transfer, and existing auth/session abuse coverage",
+          "PostgreSQL integration passed: 10 tests across 2 suites",
+          "Formatting, strict typecheck, lint, Nest build, OpenAPI artifact freshness, and Drizzle migration consistency passed",
+          "Production dependency audit passed with no known vulnerabilities; Trivy image hook is ready, image scan deferred until M019 creates the image",
+          "Progress validator and 11 tracking regressions passed; M018 selected next"
+        ]
+      }
     },
     {
       "id": "M018",

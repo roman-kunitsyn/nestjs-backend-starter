@@ -314,6 +314,9 @@ export class SessionService {
         this.config.get('AUTH_REFRESH_COOKIE_SECURE', { infer: true }) ??
         this.config.getOrThrow('NODE_ENV', { infer: true }) === 'production',
       maxAge: this.days('AUTH_REFRESH_IDLE_DAYS') * 86400,
+      sameSite: this.config.getOrThrow('AUTH_REFRESH_COOKIE_SAME_SITE', {
+        infer: true,
+      }),
     };
   }
   private days(key: 'AUTH_REFRESH_IDLE_DAYS' | 'AUTH_SESSION_MAX_DAYS') {

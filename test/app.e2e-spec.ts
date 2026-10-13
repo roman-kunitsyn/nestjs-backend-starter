@@ -15,6 +15,9 @@ import {
   createHttpAdapter,
   configureRequestCorrelation,
 } from '../src/common/http/request-id.js';
+import { configureHttpSecurity } from '../src/common/http/security.js';
+import { ConfigService } from '@nestjs/config';
+import type { EnvironmentConfig } from '../src/config/environment.js';
 import { createOpenApiDocument, setupOpenApi } from '../src/common/openapi.js';
 import {
   EMAIL_SENDER,
@@ -27,9 +30,27 @@ describe('AppController (Fastify E2E)', () => {
   let container: Awaited<ReturnType<PostgreSqlContainer['start']>>;
   let databaseClient: ReturnType<typeof postgres>;
   let originalDatabaseUrl: string | undefined;
+  let originalSecurityEnvironment: Map<string, string | undefined>;
 
   beforeAll(async () => {
     originalDatabaseUrl = process.env.DATABASE_URL;
+    const securityEnvironment = [
+      'HTTP_CORS_ORIGINS',
+      'HTTP_RATE_LIMIT_MAX',
+      'AUTH_LOGIN_RATE_LIMIT_MAX',
+      'AUTH_REGISTER_RATE_LIMIT_MAX',
+      'AUTH_RECOVERY_RATE_LIMIT_MAX',
+      'AUTH_REFRESH_RATE_LIMIT_MAX',
+    ];
+    originalSecurityEnvironment = new Map(
+      securityEnvironment.map((key) => [key, process.env[key]]),
+    );
+    process.env.HTTP_CORS_ORIGINS = 'http://localhost';
+    process.env.HTTP_RATE_LIMIT_MAX = '10000';
+    process.env.AUTH_LOGIN_RATE_LIMIT_MAX = '2';
+    process.env.AUTH_REGISTER_RATE_LIMIT_MAX = '10000';
+    process.env.AUTH_RECOVERY_RATE_LIMIT_MAX = '10000';
+    process.env.AUTH_REFRESH_RATE_LIMIT_MAX = '10000';
     container = await new PostgreSqlContainer('postgres:18.6-alpine').start();
     process.env.DATABASE_URL = container.getConnectionUri();
     databaseClient = postgres(container.getConnectionUri(), {
@@ -53,6 +74,7 @@ describe('AppController (Fastify E2E)', () => {
     );
     configureApiRouting(app);
     configureRequestCorrelation(app);
+    await configureHttpSecurity(app, app.get(ConfigService<EnvironmentConfig>));
     setupOpenApi(app, createOpenApiDocument(app), true);
     await app.init();
     configureAdapterProblemDetails(app);
@@ -96,6 +118,68 @@ describe('AppController (Fastify E2E)', () => {
     });
     expect(response.statusCode).toBe(200);
     expect(response.body).toContain('Swagger UI');
+  });
+
+  it('applies HTTP security headers, exact CORS origins, and refresh Origin checks', async () => {
+    const server = app.getHttpAdapter().getInstance();
+    const protectedHeaders = await server.inject({
+      method: 'GET',
+      url: '/api/v1',
+      headers: { origin: 'http://localhost' },
+    });
+    expect(protectedHeaders.headers['x-content-type-options']).toBe('nosniff');
+    expect(protectedHeaders.headers['x-frame-options']).toBe('SAMEORIGIN');
+    expect(protectedHeaders.headers['access-control-allow-origin']).toBe(
+      'http://localhost',
+    );
+    const rejectedCors = await server.inject({
+      method: 'GET',
+      url: '/api/v1',
+      headers: { origin: 'https://attacker.example' },
+    });
+    expect(rejectedCors.headers['access-control-allow-origin']).toBeUndefined();
+    const rejectedRefresh = await server.inject({
+      method: 'POST',
+      url: '/api/v1/auth/refresh',
+      headers: {
+        cookie: 'refresh_token=not-a-real-token',
+        origin: 'https://attacker.example',
+      },
+    });
+    expect(rejectedRefresh.statusCode).toBe(403);
+    expect(rejectedRefresh.json().code).toBe('CSRF_ORIGIN_REJECTED');
+    const missingOrigin = await server.inject({
+      method: 'POST',
+      url: '/api/v1/auth/refresh',
+      headers: { cookie: 'refresh_token=not-a-real-token' },
+    });
+    expect(missingOrigin.statusCode).toBe(403);
+  });
+
+  it('enforces endpoint-specific login limits by IP and normalized account', async () => {
+    const server = app.getHttpAdapter().getInstance();
+    await server.inject({
+      method: 'POST',
+      url: '/api/v1/auth/register',
+      payload: {
+        email: 'throttle.e2e@example.test',
+        password: 'correct horse battery staple',
+      },
+    });
+    const attempt = () =>
+      server.inject({
+        method: 'POST',
+        url: '/api/v1/auth/login',
+        payload: {
+          email: 'THROTTLE.E2E@example.test',
+          password: 'correct horse battery staple',
+        },
+      });
+    expect((await attempt()).statusCode).toBe(200);
+    expect((await attempt()).statusCode).toBe(200);
+    const limited = await attempt();
+    expect(limited.statusCode).toBe(429);
+    expect(limited.json().code).toBe('RATE_LIMITED');
   });
 
   it('serves the matching OpenAPI YAML document', async () => {
@@ -236,7 +320,7 @@ describe('AppController (Fastify E2E)', () => {
     const refresh = await server.inject({
       method: 'POST',
       url: '/api/v1/auth/refresh',
-      headers: { cookie: refreshCookie },
+      headers: { cookie: refreshCookie, origin: 'http://localhost' },
     });
     expect(refresh.statusCode).toBe(200);
     expect(refresh.json()).toMatchObject({
@@ -528,11 +612,24 @@ describe('AppController (Fastify E2E)', () => {
       where m.organization_id = ${organizationId}
         and u.normalized_email = 'organization.other@example.test'
     `;
+    const deniedTransfer = await server.inject({
+      method: 'POST',
+      url: `/api/v1/organizations/${organizationId}/ownership-transfer`,
+      headers: { authorization: ownerToken },
+      payload: {
+        membershipId: eligibleOwner[0]?.id,
+        currentPassword: 'incorrect password',
+      },
+    });
+    expect(deniedTransfer.statusCode).toBe(401);
     const transferred = await server.inject({
       method: 'POST',
       url: `/api/v1/organizations/${organizationId}/ownership-transfer`,
       headers: { authorization: ownerToken },
-      payload: { membershipId: eligibleOwner[0]?.id },
+      payload: {
+        membershipId: eligibleOwner[0]?.id,
+        currentPassword: 'correct horse battery staple',
+      },
     });
     expect(transferred.statusCode).toBe(200);
 
@@ -584,7 +681,10 @@ describe('AppController (Fastify E2E)', () => {
         method: 'POST',
         url: `/api/v1/organizations/${raceOrgId}/ownership-transfer`,
         headers: { authorization: ownerToken },
-        payload: { membershipId: raceMember[0]?.id },
+        payload: {
+          membershipId: raceMember[0]?.id,
+          currentPassword: 'correct horse battery staple',
+        },
       }),
     ]);
     expect(
@@ -803,5 +903,9 @@ describe('AppController (Fastify E2E)', () => {
     await container.stop();
     if (originalDatabaseUrl === undefined) delete process.env.DATABASE_URL;
     else process.env.DATABASE_URL = originalDatabaseUrl;
+    for (const [key, value] of originalSecurityEnvironment) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
   });
 });

@@ -817,10 +817,14 @@ paths:
               type: object
               required:
                 - membershipId
+                - currentPassword
               properties:
                 membershipId:
                   type: string
                   format: uuid
+                currentPassword:
+                  type: string
+                  format: password
               additionalProperties: false
       responses:
         "200":
