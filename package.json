@@ -42,6 +42,7 @@
     "progress:test": "node --test scripts/progress.test.mjs",
     "security:audit": "pnpm audit --prod",
     "security:scan-image": "trivy image --ignore-unfixed --exit-code 1 --severity HIGH,CRITICAL nestjs-backend-starter:local",
+    "helm:lint": "helm lint helm/nestjs-backend-starter",
     "openapi:generate": "pnpm build && node scripts/openapi.mjs generate",
     "openapi:check": "node scripts/openapi.mjs check"
   },

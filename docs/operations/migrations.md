@@ -18,4 +18,6 @@ pnpm db:seed:reference
 
 `pnpm db:seed:reference` idempotently inserts the system organization roles, permissions, and role-permission mappings. Run it after migrations. `pnpm db:seed:dev` additionally creates a verified local developer account and local organization; it refuses to run with `NODE_ENV=production`. The fixture account has no password hash and cannot authenticate until a later account flow sets credentials. Neither seed creates a production administrator.
 
+The Helm chart's pre-install/pre-upgrade hook runs `node scripts/migrate.mjs` exactly once before changing application replicas. The production image includes only the migration runner and versioned migration SQL needed for this separate Job; the API container entrypoint remains `node dist/main.js`. A migration Job failure prevents the application rollout. App rollback never implicitly rolls back database schema; use backward-compatible expand/contract changes and review schema recovery separately. See [Kubernetes operations](kubernetes.md).
+
 M008 establishes tooling and connection lifecycle; M009 introduces core tables and the first business schema. Do not edit a migration after it has been deployed. Use expand/contract changes for rolling releases and keep rollback planning separate from application rollback.

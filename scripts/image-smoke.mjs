@@ -106,7 +106,7 @@ try {
     container,
     'node',
     '-e',
-    "const fs=require('node:fs');const p=JSON.parse(fs.readFileSync('/app/package.json'));if(process.getuid()!==1000||p.devDependencies||p.scripts||fs.existsSync('/app/src')||fs.existsSync('/app/test')||fs.existsSync('/app/scripts')||fs.existsSync('/app/node_modules/.pnpm/lock.yaml')||fs.existsSync('/app/node_modules/.bin/nest')||fs.existsSync('/app/node_modules/.bin/drizzle-kit'))process.exit(1)",
+    "const fs=require('node:fs');const p=JSON.parse(fs.readFileSync('/app/package.json'));const scripts=fs.readdirSync('/app/scripts');if(process.getuid()!==1000||p.devDependencies||p.scripts||fs.existsSync('/app/src')||fs.existsSync('/app/test')||scripts.length!==1||scripts[0]!=='migrate.mjs'||!fs.existsSync('/app/drizzle/migrations/meta/_journal.json')||fs.existsSync('/app/node_modules/.pnpm/lock.yaml')||fs.existsSync('/app/node_modules/.bin/nest')||fs.existsSync('/app/node_modules/.bin/drizzle-kit'))process.exit(1)",
   ]);
   docker(['stop', '--time', '30', container]);
   const state = JSON.parse(

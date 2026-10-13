@@ -797,26 +797,26 @@ The production Dockerfile must use a multi-stage build, a non-root user, minimal
 The project includes a Helm chart under:
 
 ```text
-deploy/helm/backend/
+helm/nestjs-backend-starter/
 ```
 
 ### Validate the chart
 
 ```bash
-helm lint ./deploy/helm/backend
+helm lint ./helm/nestjs-backend-starter
 ```
 
 ### Deploy to staging
 
 ```bash
 helm upgrade --install nestjs-backend-starter \
-  ./deploy/helm/backend \
+  ./helm/nestjs-backend-starter \
   --namespace staging \
   --create-namespace \
-  -f ./deploy/helm/backend/values-staging.yaml
+  -f ./helm/nestjs-backend-starter/values.yaml
 ```
 
-This command assumes the cluster, ingress controller, container registry access, secrets, database, and required migrations have been provisioned.
+This command assumes the cluster, ingress controller, container registry access, externally managed Secret, database, and required migrations have been provisioned. Review [Kubernetes operations](docs/operations/kubernetes.md) and create environment-specific values with an immutable image digest before deployment. The chart is under implementation and this command is not deployment evidence.
 
 ### Deploy to production
 

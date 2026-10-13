@@ -18,6 +18,8 @@ The current scaffold setup is in [Local development](operations/local-developmen
 
 Health probes, metrics, and optional tracing are described in [Observability operations](operations/observability.md).
 
+Helm deployment, migration, and recovery procedures are in [Kubernetes operations](operations/kubernetes.md).
+
 ## Conventions
 
 - Keep source references intact and link to them from derived documents.

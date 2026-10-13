@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "starter.fullname" . }}
+data:
+  NODE_ENV: production
+  APP_HOST: 0.0.0.0
+  PORT: {{ .Values.config.port | quote }}
+  API_DOCS_ENABLED: "false"
+  DB_POOL_MAX: {{ .Values.config.dbPoolMax | quote }}
+  CORS_ORIGINS: {{ .Values.config.corsOrigins | quote }}
+  TRUSTED_PROXY_CIDRS: {{ .Values.config.trustedProxyCidrs | quote }}
+  AUTH_JWT_ISSUER: {{ .Values.config.authJwtIssuer | quote }}
+  AUTH_JWT_AUDIENCE: {{ .Values.config.authJwtAudience | quote }}
+  AUTH_JWT_KID: {{ .Values.config.authJwtKid | quote }}
+  HTTP_CORS_ORIGINS: {{ .Values.config.corsOrigins | quote }}
+  HTTP_TRUSTED_PROXY_CIDRS: {{ .Values.config.trustedProxyCidrs | quote }}
+  DB_CONNECT_TIMEOUT_SECONDS: {{ .Values.config.dbConnectTimeoutSeconds | quote }}
+  DB_IDLE_TIMEOUT_SECONDS: {{ .Values.config.dbIdleTimeoutSeconds | quote }}
+  HTTP_RATE_LIMIT_MAX: {{ .Values.config.httpRateLimitMax | quote }}
+  HTTP_RATE_LIMIT_WINDOW_MS: {{ .Values.config.httpRateLimitWindowMs | quote }}

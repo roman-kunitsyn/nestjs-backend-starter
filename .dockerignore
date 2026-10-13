@@ -21,4 +21,7 @@ compose*.yml
 docs
 test
 scripts
+!scripts/
+scripts/*
+!scripts/migrate.mjs
 artifacts

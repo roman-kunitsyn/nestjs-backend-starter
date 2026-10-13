@@ -1,6 +1,6 @@
 {
   "project": {
-    "status": "in_progress",
+    "status": "blocked",
     "current_stage": "Stage 09 — Production Deployment",
     "next_milestone": "M020"
   },
@@ -90,7 +90,7 @@
     {
       "id": "stage-09",
       "title": "Production Deployment",
-      "status": "in_progress",
+      "status": "blocked",
       "milestones": [
         "M019",
         "M020",
@@ -499,7 +499,7 @@
       "id": "M020",
       "title": "Helm and Kubernetes Operations",
       "stage": "stage-09",
-      "status": "pending",
+      "status": "blocked",
       "dependencies": [
         "M019"
       ],

@@ -1,0 +1,58 @@
+replicaCount: 2
+image:
+  repository: ghcr.io/example/nestjs-backend-starter
+  tag: "0.0.1"
+  digest: ""
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+serviceAccount:
+  create: true
+  automount: false
+service:
+  port: 80
+ingress:
+  enabled: false
+  className: ""
+  host: api.example.com
+  tlsSecret: api-example-com-tls
+secretName: nestjs-backend-starter-secrets
+config:
+  port: 3000
+  dbPoolMax: 5
+  dbConnectTimeoutSeconds: 10
+  dbIdleTimeoutSeconds: 20
+  httpRateLimitMax: 120
+  httpRateLimitWindowMs: 60000
+  corsOrigins: ""
+  trustedProxyCidrs: ""
+  authJwtIssuer: https://api.example.com
+  authJwtAudience: nestjs-backend-starter
+  authJwtKid: production
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 512Mi
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+networkPolicy:
+  enabled: true
+  ingressNamespaceSelector: {}
+  databaseNamespaceSelector: {}
+  databasePodSelector: {}
+migrations:
+  enabled: true
+  backoffLimit: 2
+  activeDeadlineSeconds: 600
+  ttlSecondsAfterFinished: 86400
+terminationGracePeriodSeconds: 45
+nodeSelector: {}
+tolerations: []
+affinity: {}
