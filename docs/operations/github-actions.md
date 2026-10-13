@@ -81,3 +81,5 @@ If a check is unavailable, record it as not run. Do not treat a skipped or unava
 3. Confirm branch protection requires `Quality and image gates`.
 4. Confirm release workflow execution and artifact checks separately; a green CI run alone does not prove GHCR publication.
 5. Find deployment, rollback, and database recovery procedures in [Kubernetes operations](kubernetes.md) and [Database migrations](migrations.md).
+
+Deployment-time `KUBECONFIG`, `HELM_VALUES_YAML`, and `SMOKE_URL` are adopter integration inputs for `.github/workflows/deploy.yml`; their values, real credentials, and a live dispatch are not M021/M022 template acceptance gates. M021 does verify the GitHub environment policies that guard that workflow. See [GitHub environment governance](github-governance.md).

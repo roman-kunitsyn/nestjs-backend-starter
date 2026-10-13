@@ -17,6 +17,27 @@ gh api repos/roman-kunitsyn/nestjs-backend-starter/rulesets/RULESET_ID
 
 Expected: the active main branch ruleset targets the default branch and requires the exact `Quality and image gates` status context, pull requests, deletion protection, and non-fast-forward protection. The tag ruleset targets `refs/tags/v*` and prevents updates/deletions. Review ruleset detail, not just its name. If the API returns 403, the account lacks required administration visibility; inspect Settings in the GitHub UI as an administrator.
 
+## Read-only environment policy verification
+
+Run these commands in an operator shell authenticated to GitHub with repository environment/ruleset read access. They issue GET requests and do not reveal secret values. A command run inside a restricted agent sandbox may lack GitHub authorization; that result describes only that execution context and must not be used to infer whether the host machine's `gh` login is valid.
+
+```bash
+gh api repos/roman-kunitsyn/nestjs-backend-starter/environments \
+  --jq '.environments[] | {name, protection_rules, deployment_branch_policy, can_admins_bypass}'
+gh api repos/roman-kunitsyn/nestjs-backend-starter/environments/staging \
+  --jq '{name, protection_rules, deployment_branch_policy, can_admins_bypass}'
+gh api repos/roman-kunitsyn/nestjs-backend-starter/environments/production \
+  --jq '{name, protection_rules, deployment_branch_policy, can_admins_bypass}'
+gh api repos/roman-kunitsyn/nestjs-backend-starter/environments/staging/deployment-branch-policies \
+  --jq '.branch_policies[]? | {name, type}'
+gh api repos/roman-kunitsyn/nestjs-backend-starter/environments/production/deployment-branch-policies \
+  --jq '.branch_policies[]? | {name, type}'
+gh api repos/roman-kunitsyn/nestjs-backend-starter/rulesets \
+  --jq '.[] | {id, name, target, enforcement, source, bypass_actors}'
+```
+
+Expected: both environment records exist and show independently reviewed protection configuration with distinct deployment-ref restrictions appropriate to each environment; production lists at least one required reviewer, a policy limited to approved release refs, and administrator bypass disabled where supported. Inspect the named policy details and ruleset `bypass_actors`; names alone do not prove the restrictions match the release workflow. If the environment API does not return a field, or a GET returns 403/404, use **Settings → Environments → staging/production** and **Settings → Rules → Rulesets** as an administrator and record the displayed policy. Do not treat an unavailable field as passing evidence. M021 requires evidence of what GitHub actually enforces, not merely the intended workflow YAML.
+
 ## Configure GitHub environments
 
 In **Settings → Environments**, create separate `staging` and `production` environments. M021 verifies environment governance and separation. A consumer enables live deployment by supplying the following exact inputs for each environment to `.github/workflows/deploy.yml`:
@@ -77,8 +98,8 @@ Do not use an actual staging deployment as M021 evidence. M022 verifies integrat
 
 Record the date, operator, ruleset names/IDs and active conditions, required check name, production reviewers and deployment ref restrictions. Record the presence of consumer secret/variable names only when a consumer has configured them; their absence does not block template acceptance. If a required governance setting cannot be inspected, document it as unverified and keep M021 blocked.
 
-### Repository audit on 2026-10-13
+### Last recorded repository audit on 2026-10-13
 
 Read-only GitHub API inspection found active ruleset `main-branch-protection` (ID `24975194`) targeting the default branch. It requires pull requests, blocks deletion and non-fast-forward updates, and requires `Quality and image gates`. Active ruleset `release-tag-protection` (ID `24975901`) targets `refs/tags/v*` and blocks update/deletion. No bypass actors were configured for either ruleset. The main ruleset has zero required approving reviews; the M021 contract requires the status check and protection rules, not a minimum review count.
 
-The `staging` and `production` environments exist, but both currently report empty `protection_rules` and a null deployment branch policy. GitHub reports `can_admins_bypass: true`. Production reviewers/ref restrictions and the intended environment governance are not configured or verified; this remains a failed M021 acceptance criterion. The absence of `KUBECONFIG`, `HELM_VALUES_YAML`, and `SMOKE_URL` is not a template acceptance failure because these are consumer deployment-time inputs. Secret values were not retrieved.
+At the time of this audit, the `staging` and `production` environments existed, but both reported empty `protection_rules` and a null deployment branch policy. GitHub reported `can_admins_bypass: true`. Production reviewers/ref restrictions and the intended environment governance were absent, so this failed M021 acceptance then. This record is historical and must not be treated as a fresh verification of current settings. The current M021 handoff still needs an operator to run the read-only checks above or inspect the Settings UI and record the result. The absence of `KUBECONFIG`, `HELM_VALUES_YAML`, and `SMOKE_URL` is not a template acceptance failure because these are consumer deployment-time inputs. Secret values were not retrieved.
