@@ -2,6 +2,8 @@
 
 This directory contains the approved implementation sequence and its execution state.
 
+**Starter history: terminal.** M000–M022 and their completion evidence describe this repository's completed implementation. `pnpm progress:select` returns no next milestone. Do not reopen or extend this roadmap for routine maintenance; a separately authorized scope follows the maintenance workflow. When adopted, preserve this tree as starter history and establish a distinct active tracker as described in [template adoption](../operations/template-adoption.md).
+
 - [Stage 00](stages/stage-00-preparation.md) defines the preparation phase.
 - [M000](milestones/M000-documentation-structure.md) established the documentation structure.
 - [M001](milestones/M001-architecture-decomposition.md) records architecture decomposition and source traceability.

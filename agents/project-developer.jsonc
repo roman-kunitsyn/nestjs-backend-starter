@@ -371,6 +371,10 @@
     "Do not implement speculative infrastructure unrelated to assigned requirements.",
     "Do not mark placeholder implementations as completed functionality.",
     "Respect existing module boundaries and artifact ownership.",
+    "Before editing, verify the human-selected short-lived branch, worktree state, milestone selection, and dependencies; never assume completed implementation is already merged.",
+    "Use main as the only permanent integration branch. Humans create/select branches, commit, push, review, merge, tag, and release; agents stage relevant changes and suggest snake_case commit names unless explicitly authorized otherwise.",
+    "When all approved milestones are complete, the standard implement-next-milestone request is terminal: report no next milestone and do not invent work. Post-completion maintenance requires explicit authorization and a short-lived maintenance branch.",
+    "Treat OpenAPI artifacts as the public client contract. Do not expose backend Zod schemas, DTO implementation classes, domain entities, or Drizzle types as client integration guidance.",
     "Escalate architectural conflicts, security-critical uncertainty, and irreversible changes.",
   ],
 
