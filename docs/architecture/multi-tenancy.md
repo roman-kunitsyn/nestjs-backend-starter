@@ -18,6 +18,14 @@ Registration and organization creation are independent. Support register → ver
 
 Organization switching is primarily frontend URL context. Since organization IDs appear in tenant URLs, switching does not require a new login. Do not use mutable global active-org state for authorization. A later active-org preference is a user preference only.
 
+### Organization lifecycle API
+
+M013 implements `POST /api/v1/organizations` (create), `GET /api/v1/organizations` (list current user's memberships), `GET /api/v1/organizations/{organizationId}`, and `PATCH /api/v1/organizations/{organizationId}`. Creation accepts a name and slug, normalizes the slug with NFKC, lowercase, and hyphen separators, rejects reserved names, and commits the organization, active membership, and OWNER role assignment in one transaction. Registration does not create an organization. A normalized slug collision returns `409 RESOURCE_CONFLICT`.
+
+Detail and update resolve an active membership before checking `organization:read` or `organization:update`; unknown and cross-organization IDs return the same `404 RESOURCE_NOT_FOUND`. Updates are scoped by both organization ID and active state. The list is scoped by the authenticated user and includes each membership's role and status.
+
+`POST /api/v1/organizations/{organizationId}/suspend`, `/archive`, and `/activate` are explicit lifecycle actions. OWNER's `organization:delete` grant authorizes suspension and archival; `organization:update` authorizes reactivation. Organization updates and lifecycle writes lock the organization row, then check the active membership and permission within that transaction. Reactivation also verifies an active OWNER. Membership changes that can affect ownership must call `OrganizationService.lockForMembershipChange` before changing membership/role state and `assertActiveOwnerInvariant` before commit. This common lock order serializes organization mutations with the member operations introduced in M014. Archived organizations are terminal.
+
 ## Owner invariant
 
 Each active org always has at least one active OWNER. Prevent removal, demotion, or suspension of the last owner and invalid transfer. Concurrent operations use transaction locks, serializable transactions/retries, or equivalent database-safe protection. An application count check outside transaction is not sufficient.

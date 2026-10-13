@@ -10,12 +10,14 @@ import { ProblemDetailsFilter } from './common/filters/problem-details.filter.js
 import { DatabaseModule } from './infrastructure/database/database.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { SessionGuard } from './modules/auth/session.guard.js';
+import { OrganizationsModule } from './modules/organizations/organizations.module.js';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnvironment }),
     DatabaseModule,
     AuthModule,
+    OrganizationsModule,
     LoggerModule.forRoot({
       pinoHttp: {
         level: process.env.NODE_ENV === 'test' ? 'silent' : 'info',

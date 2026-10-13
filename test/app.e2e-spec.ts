@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { PostgreSqlContainer } from '@testcontainers/postgresql';
+import { execFileSync } from 'node:child_process';
 import { migrate } from 'drizzle-orm/postgres-js/migrator';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
@@ -35,11 +36,15 @@ describe('AppController (Fastify E2E)', () => {
     await migrate(drizzle({ client: databaseClient, schema }), {
       migrationsFolder: './drizzle/migrations',
     });
+    execFileSync('node', ['scripts/seed.mjs', 'reference'], {
+      env: { ...process.env, DATABASE_URL: container.getConnectionUri() },
+      stdio: 'pipe',
+    });
     const { AppModule } = await import('../src/app.module.js');
     app = await NestFactory.create<NestFastifyApplication>(
       AppModule,
       createHttpAdapter(API_BODY_LIMIT_BYTES),
-      { logger: false },
+      { logger: false, abortOnError: false },
     );
     configureApiRouting(app);
     configureRequestCorrelation(app);
@@ -253,6 +258,161 @@ describe('AppController (Fastify E2E)', () => {
       headers: { authorization: `Bearer ${refresh.json().accessToken}` },
     });
     expect(denied.statusCode).toBe(401);
+  });
+
+  it('creates an organization and owner atomically, normalizes slugs, and scopes organization access', async () => {
+    const server = app.getHttpAdapter().getInstance();
+    const credentials = async (email: string) => {
+      await server.inject({
+        method: 'POST',
+        url: '/api/v1/auth/register',
+        payload: { email, password: 'correct horse battery staple' },
+      });
+      const login = await server.inject({
+        method: 'POST',
+        url: '/api/v1/auth/login',
+        payload: { email, password: 'correct horse battery staple' },
+      });
+      return `Bearer ${login.json().accessToken as string}`;
+    };
+    const ownerToken = await credentials('organization.owner@example.test');
+    const otherToken = await credentials('organization.other@example.test');
+    const beforeCreation = await databaseClient`
+      select count(*)::int as count from organization_memberships m
+      inner join users u on u.id = m.user_id
+      where u.normalized_email = 'organization.owner@example.test'
+    `;
+    expect(beforeCreation[0]?.count).toBe(0);
+
+    const reservedSlug = await server.inject({
+      method: 'POST',
+      url: '/api/v1/organizations',
+      headers: { authorization: ownerToken },
+      payload: { name: 'Reserved', slug: 'Admin' },
+    });
+    expect(reservedSlug.statusCode).toBe(400);
+
+    const created = await server.inject({
+      method: 'POST',
+      url: '/api/v1/organizations',
+      headers: { authorization: ownerToken },
+      payload: { name: 'Acme Incorporated', slug: '  Acme Team  ' },
+    });
+    expect(created.statusCode).toBe(201);
+    expect(created.json()).toMatchObject({
+      name: 'Acme Incorporated',
+      slug: 'acme-team',
+      status: 'active',
+      membership: { role: 'OWNER', status: 'active' },
+    });
+    const organizationId = created.json().id as string;
+    const ownerRows = await databaseClient`
+      select m.id from organization_memberships m
+      inner join membership_roles mr on mr.membership_id = m.id
+      inner join roles r on r.id = mr.role_id
+      where m.organization_id = ${organizationId} and m.status = 'active' and r.key = 'OWNER'
+    `;
+    expect(ownerRows).toHaveLength(1);
+
+    const listed = await server.inject({
+      method: 'GET',
+      url: '/api/v1/organizations',
+      headers: { authorization: ownerToken },
+    });
+    expect(listed.statusCode).toBe(200);
+    expect(listed.json().map((item: { id: string }) => item.id)).toContain(
+      organizationId,
+    );
+
+    const concealed = await server.inject({
+      method: 'GET',
+      url: `/api/v1/organizations/${organizationId}`,
+      headers: { authorization: otherToken },
+    });
+    expect(concealed.statusCode).toBe(404);
+    const concealedUpdate = await server.inject({
+      method: 'PATCH',
+      url: `/api/v1/organizations/${organizationId}`,
+      headers: { authorization: otherToken },
+      payload: { name: 'Unauthorized change' },
+    });
+    expect(concealedUpdate.statusCode).toBe(404);
+    const concealedLifecycle = await server.inject({
+      method: 'POST',
+      url: `/api/v1/organizations/${organizationId}/suspend`,
+      headers: { authorization: otherToken },
+    });
+    expect(concealedLifecycle.statusCode).toBe(404);
+
+    const otherUser = await databaseClient`
+      select id from users where normalized_email = 'organization.other@example.test'
+    `;
+    const memberRole =
+      await databaseClient`select id from roles where key = 'MEMBER'`;
+    const member = await databaseClient`
+      insert into organization_memberships (organization_id, user_id)
+      values (${organizationId}, ${otherUser[0]?.id}) returning id
+    `;
+    await databaseClient`
+      insert into membership_roles (membership_id, role_id)
+      values (${member[0]?.id}, ${memberRole[0]?.id})
+    `;
+    const memberRead = await server.inject({
+      method: 'GET',
+      url: `/api/v1/organizations/${organizationId}`,
+      headers: { authorization: otherToken },
+    });
+    expect(memberRead.statusCode).toBe(403);
+    const memberUpdate = await server.inject({
+      method: 'PATCH',
+      url: `/api/v1/organizations/${organizationId}`,
+      headers: { authorization: otherToken },
+      payload: { name: 'Unauthorized change' },
+    });
+    expect(memberUpdate.statusCode).toBe(403);
+
+    const duplicate = await server.inject({
+      method: 'POST',
+      url: '/api/v1/organizations',
+      headers: { authorization: otherToken },
+      payload: { name: 'Another Team', slug: 'ACME TEAM' },
+    });
+    expect(duplicate.statusCode).toBe(409);
+
+    const renamed = await server.inject({
+      method: 'PATCH',
+      url: `/api/v1/organizations/${organizationId}`,
+      headers: { authorization: ownerToken },
+      payload: { name: 'Acme Group' },
+    });
+    expect(renamed.statusCode).toBe(200);
+    expect(renamed.json()).toMatchObject({
+      name: 'Acme Group',
+      slug: 'acme-team',
+    });
+
+    const suspended = await server.inject({
+      method: 'POST',
+      url: `/api/v1/organizations/${organizationId}/suspend`,
+      headers: { authorization: ownerToken },
+    });
+    expect(suspended.statusCode).toBe(200);
+    expect(suspended.json().status).toBe('suspended');
+    const activated = await server.inject({
+      method: 'POST',
+      url: `/api/v1/organizations/${organizationId}/activate`,
+      headers: { authorization: ownerToken },
+    });
+    expect(activated.statusCode).toBe(200);
+    expect(activated.json().status).toBe('active');
+
+    const archived = await server.inject({
+      method: 'POST',
+      url: `/api/v1/organizations/${organizationId}/archive`,
+      headers: { authorization: ownerToken },
+    });
+    expect(archived.statusCode).toBe(200);
+    expect(archived.json().status).toBe('archived');
   });
 
   afterAll(async () => {

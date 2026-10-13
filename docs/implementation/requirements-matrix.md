@@ -16,7 +16,7 @@ This matrix maps the preserved source specification and higher-authority instruc
 | PostgreSQL, Drizzle/postgres.js, pool lifecycle and migrations | AGENTS.md §§3, 11; ADR-001; source §§1.2, 4–5 | M008–M009, M020, M022 | Fresh DB migration, typed provider lifecycle, migration job verification |
 | Core tables, keys, indexes, constraints, audit/history retention | source §§5.1, 5.3–5.5 | M009, M011–M016 | PostgreSQL integration tests for schema, constraints and rollback |
 | Organization tenant model, isolation, composite consistency, optional RLS guidance | AGENTS.md §11; source §§5.2, 21.3 | M009, M012–M016, M022 | Cross-tenant read/write/FK integration and E2E matrix |
-| Owner invariant and concurrency-safe organization changes | AGENTS.md §11; source §§5.5–5.6, 8 | M013–M014 | Concurrent last-owner/remove/demote/transfer integration tests |
+| Owner invariant and concurrency-safe organization changes | AGENTS.md §11; source §§5.5–5.6, 8 | M013–M014 | M013 organization row-lock and active-owner transaction primitives; M014 concurrent last-owner/remove/demote/transfer integration tests |
 | Argon2id, registration, verification, recovery, password changes | AGENTS.md §§3, 11; source §§5.4, 6, 13.5 | M010 | Auth unit, DB integration, E2E lifecycle and failure cases |
 | Login and access/session issuance | AGENTS.md §3; source §§6, 9.3 | M011 | Credential verification, disabled-account and session-bound JWT E2E |
 | JWT claim validation/key rotation; opaque refresh rotation/replay/revocation | AGENTS.md §11; source §§5.4, 6, 13.1 | M010–M011, M017 | JWT tests; concurrent refresh/replay/revocation E2E and DB tests |

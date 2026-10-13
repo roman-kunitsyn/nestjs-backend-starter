@@ -4,7 +4,7 @@
 
 **Project status:** in_progress
 **Current stage:** Stage 05 — Organizations and Authorization
-**Next milestone:** M013 — Organization Lifecycle and Ownership (pending)
+**Next milestone:** M014 — Memberships and Invitations (pending)
 
 ## Stage 00 — Preparation
 

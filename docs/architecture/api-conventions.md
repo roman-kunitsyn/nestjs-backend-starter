@@ -8,6 +8,8 @@ Business and auth routes use `/api/v1`; health endpoints remain outside. Use plu
 
 The source endpoint inventory includes registration/login/refresh/logout/logout-all/me/sessions/revocation/email verification/resend/password recovery/change; user profile read/update; organization create/list/detail/update; members list/update/remove; invitation create/list/revoke/accept; ownership transfer and leave. Organization request/response DTOs, permissions, side effects, and status codes must be specified concretely during implementation.
 
+Organization lifecycle contracts are defined in [Multi-tenancy](multi-tenancy.md): create/list/detail/update plus explicit suspend/archive/activate actions. Create returns `201` with the organization and initial OWNER membership; reads, updates, and lifecycle actions return `200`. Cross-organization IDs are concealed with `404`.
+
 ## Pagination, filtering, and idempotency
 
 Use cursor pagination for large tenant datasets. Query parameters: `limit`, `cursor`, `sort`, `order`. Default limit 20, maximum 100. Return `{items, pageInfo:{hasNextPage,nextCursor}}`. Cursors are opaque, validated, bound to query context and tenant; stable order includes a unique tie-breaker such as `(created_at,id)`. Offset may be separate for simple admin tables.
