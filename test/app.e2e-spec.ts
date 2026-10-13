@@ -20,6 +20,7 @@ import {
   EMAIL_SENDER,
   type EmailSender,
 } from '../src/modules/email/email-sender.js';
+import { EmailOutboxService } from '../src/modules/email/email-outbox.service.js';
 
 describe('AppController (Fastify E2E)', () => {
   let app: NestFastifyApplication;
@@ -323,6 +324,7 @@ describe('AppController (Fastify E2E)', () => {
       status: 'pending',
     });
     expect(inviteResponse.json()).not.toHaveProperty('token');
+    await app.get(EmailOutboxService).dispatchOnce();
     const invitations = await server.inject({
       method: 'GET',
       url: `/api/v1/organizations/${organizationId}/invitations`,
@@ -360,6 +362,7 @@ describe('AppController (Fastify E2E)', () => {
       payload: { email: 'existing.invitee@example.test', role: 'VIEWER' },
     });
     expect(existingUserInvite.statusCode).toBe(201);
+    await app.get(EmailOutboxService).dispatchOnce();
     const existingInviteToken = sentInvitations
       .at(-1)
       ?.text.match(/Invitation token: (\S+)/)?.[1];
@@ -378,6 +381,7 @@ describe('AppController (Fastify E2E)', () => {
       payload: { email: 'new.invitee@example.test', role: 'VIEWER' },
     });
     expect(newInvite.statusCode).toBe(201);
+    await app.get(EmailOutboxService).dispatchOnce();
     const inviteToken = sentInvitations
       .at(-1)
       ?.text.match(/Invitation token: (\S+)/)?.[1];

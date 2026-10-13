@@ -19,6 +19,7 @@ import {
   rolePermissions,
   roles,
 } from '../../infrastructure/database/schema/organizations.schema.js';
+import { auditEvents } from '../../infrastructure/database/schema/resources.schema.js';
 import { PermissionService } from '../auth/permission.service.js';
 import type {
   CreateOrganizationInput,
@@ -96,6 +97,14 @@ export class OrganizationService {
         await tx.insert(membershipRoles).values({
           membershipId: membership.id,
           roleId: ownerRole.id,
+        });
+        await tx.insert(auditEvents).values({
+          organizationId: organization.id,
+          actorUserId: userId,
+          action: 'organization.created',
+          resourceType: 'organization',
+          resourceId: organization.id,
+          metadata: { slug: organization.slug },
         });
 
         return {
@@ -182,6 +191,17 @@ export class OrganizationService {
           )
           .returning();
         if (!updated) throw notFound();
+        await tx.insert(auditEvents).values({
+          organizationId,
+          actorUserId: userId,
+          action: 'organization.updated',
+          resourceType: 'organization',
+          resourceId: organizationId,
+          metadata: {
+            nameChanged: input.name !== locked.name,
+            slugChanged: input.slug !== locked.slug,
+          },
+        });
         return publicOrganization(updated);
       });
     } catch (error) {
@@ -240,6 +260,14 @@ export class OrganizationService {
         .where(eq(organizations.id, organizationId))
         .returning();
       if (!updated) throw notFound();
+      await tx.insert(auditEvents).values({
+        organizationId,
+        actorUserId: userId,
+        action: 'organization.status_changed',
+        resourceType: 'organization',
+        resourceId: organizationId,
+        metadata: { action, previousStatus: locked.status, status },
+      });
       return publicOrganization(updated);
     });
   }

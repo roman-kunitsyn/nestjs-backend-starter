@@ -15,6 +15,10 @@ import {
 } from '../../infrastructure/database/schema/identity.schema.js';
 import { AuthService } from './auth.service.js';
 import { JwtService } from './jwt.service.js';
+import {
+  AuditEventService,
+  EmailOutboxService,
+} from '../email/email-outbox.service.js';
 
 const digest = (value: string) =>
   createHash('sha256').update(value).digest('hex');
@@ -34,6 +38,8 @@ export class SessionService {
     private readonly auth: AuthService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService<EnvironmentConfig>,
+    private readonly outbox: EmailOutboxService,
+    private readonly audit: AuditEventService,
   ) {
     const configuredKey = config.getOrThrow('AUTH_REFRESH_TOKEN_KEY', {
       infer: true,
@@ -262,16 +268,41 @@ export class SessionService {
       .orderBy(desc(authSessions.lastUsedAt));
   }
   async revoke(userId: string, sessionId: string) {
-    await this.db
-      .update(authSessions)
-      .set({ revokedAt: new Date(), revocationReason: 'logout' })
-      .where(
-        and(
-          eq(authSessions.userId, userId),
-          eq(authSessions.id, sessionId),
-          isNull(authSessions.revokedAt),
-        ),
-      );
+    await this.db.transaction(async (tx) => {
+      const [session] = await tx
+        .select({ session: authSessions, user: users })
+        .from(authSessions)
+        .innerJoin(users, eq(users.id, authSessions.userId))
+        .where(
+          and(
+            eq(authSessions.userId, userId),
+            eq(authSessions.id, sessionId),
+            isNull(authSessions.revokedAt),
+          ),
+        )
+        .limit(1)
+        .for('update');
+      if (!session) return;
+      const now = new Date();
+      await tx
+        .update(authSessions)
+        .set({ revokedAt: now, revocationReason: 'logout' })
+        .where(eq(authSessions.id, sessionId));
+      await this.outbox.enqueue(tx, 'security-session-revoked', {
+        recipient: session.user.email,
+        ...(session.user.displayName
+          ? { userName: session.user.displayName }
+          : {}),
+        occurredAt: now.toISOString(),
+      });
+      await this.audit.record(tx, {
+        actorUserId: userId,
+        actorSessionId: sessionId,
+        action: 'auth.session_revoked',
+        resourceType: 'auth_session',
+        resourceId: sessionId,
+      });
+    });
     return { revoked: true };
   }
   accessToken(userId: string, sessionId: string) {

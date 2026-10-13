@@ -3,8 +3,8 @@
 > Generated from `progress.json` by `pnpm progress:dashboard`. Do not edit by hand.
 
 **Project status:** in_progress
-**Current stage:** Stage 06 — Email and Audit
-**Next milestone:** M015 — Email Delivery and Audit Outbox (pending)
+**Current stage:** Stage 07 — Example Resource
+**Next milestone:** M016 — Tenant-Scoped Example Resources (pending)
 
 ## Stage 00 — Preparation
 
@@ -25,7 +25,7 @@
 | 03 | Database Infrastructure | M008–M009 | completed |
 | 04 | Identity and Sessions | M010–M011 | completed |
 | 05 | Organizations and Authorization | M012–M014 | completed |
-| 06 | Email and Audit | M015 | pending |
+| 06 | Email and Audit | M015 | completed |
 | 07 | Example Resource | M016 | pending |
 | 08 | Security and Observability | M017–M018 | pending |
 | 09 | Production Deployment | M019–M021 | pending |

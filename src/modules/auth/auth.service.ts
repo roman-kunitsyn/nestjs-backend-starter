@@ -16,7 +16,10 @@ import {
   passwordResetTokens,
   users,
 } from '../../infrastructure/database/schema/identity.schema.js';
-import { EMAIL_SENDER, type EmailSender } from '../email/email-sender.js';
+import {
+  AuditEventService,
+  EmailOutboxService,
+} from '../email/email-outbox.service.js';
 import { PasswordHasher } from './password-hasher.js';
 import type { RegisterInput } from './auth.schemas.js';
 
@@ -40,7 +43,8 @@ export class AuthService {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     private readonly passwords: PasswordHasher,
-    @Inject(EMAIL_SENDER) private readonly email: EmailSender,
+    private readonly outbox: EmailOutboxService,
+    private readonly audit: AuditEventService,
   ) {}
 
   async register(input: RegisterInput) {
@@ -65,6 +69,10 @@ export class AuthService {
           tokenDigest: digest(token),
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
         });
+        await this.outbox.enqueue(tx, 'verify-email', {
+          recipient: email,
+          token,
+        });
         return user;
       })
       .catch((error: unknown) => {
@@ -75,11 +83,6 @@ export class AuthService {
           });
         throw error;
       });
-    await this.email.send({
-      to: email,
-      subject: 'Verify your email',
-      text: `Verify your email with this token: ${token}`,
-    });
     return { user: publicUser(created), emailVerificationRequired: true };
   }
 
@@ -141,7 +144,7 @@ export class AuthService {
 
   async resendVerification(email: string): Promise<{ accepted: true }> {
     const normalizedEmail = normalizeEmail(email);
-    const issuance = await this.db.transaction(async (tx) => {
+    await this.db.transaction(async (tx) => {
       const [user] = await tx
         .select()
         .from(users)
@@ -160,19 +163,16 @@ export class AuthService {
         tokenDigest: digest(token),
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
       });
-      return { email: user.email, token };
-    });
-    if (issuance)
-      await this.email.send({
-        to: issuance.email,
-        subject: 'Verify your email',
-        text: `Verify your email with this token: ${issuance.token}`,
+      await this.outbox.enqueue(tx, 'verify-email', {
+        recipient: user.email,
+        token,
       });
+    });
     return { accepted: true };
   }
 
   async forgotPassword(email: string): Promise<{ accepted: true }> {
-    const issuance = await this.db.transaction(async (tx) => {
+    await this.db.transaction(async (tx) => {
       const [user] = await tx
         .select()
         .from(users)
@@ -191,14 +191,11 @@ export class AuthService {
         tokenDigest: digest(token),
         expiresAt: new Date(Date.now() + 30 * 60 * 1000),
       });
-      return { email: user.email, token };
-    });
-    if (issuance)
-      await this.email.send({
-        to: issuance.email,
-        subject: 'Reset your password',
-        text: `Reset your password with this token: ${issuance.token}`,
+      await this.outbox.enqueue(tx, 'reset-password', {
+        recipient: user.email,
+        token,
       });
+    });
     return { accepted: true };
   }
 
@@ -261,6 +258,16 @@ export class AuthService {
         .where(
           and(eq(authSessions.userId, user.id), isNull(authSessions.revokedAt)),
         );
+      await this.outbox.enqueue(tx, 'password-changed', {
+        recipient: user.email,
+        ...(user.displayName ? { userName: user.displayName } : {}),
+      });
+      await this.audit.record(tx, {
+        actorUserId: user.id,
+        action: 'auth.password_reset',
+        resourceType: 'user',
+        resourceId: user.id,
+      });
       return { reset: true };
     });
   }
@@ -325,6 +332,18 @@ export class AuthService {
               isNull(authSessions.revokedAt),
             ),
           );
+      if (changed) {
+        await this.outbox.enqueue(tx, 'password-changed', {
+          recipient: user.email,
+          ...(user.displayName ? { userName: user.displayName } : {}),
+        });
+        await this.audit.record(tx, {
+          actorUserId: user.id,
+          action: 'auth.password_change',
+          resourceType: 'user',
+          resourceId: user.id,
+        });
+      }
       return changed;
     });
     if (!updated)

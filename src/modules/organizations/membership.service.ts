@@ -5,7 +5,6 @@ import {
   Inject,
   Injectable,
   NotFoundException,
-  ServiceUnavailableException,
 } from '@nestjs/common';
 import { and, eq, gt } from 'drizzle-orm';
 import {
@@ -24,7 +23,8 @@ import {
 import { users as identityUsers } from '../../infrastructure/database/schema/identity.schema.js';
 import { OrganizationService } from './organization.service.js';
 import type { CreateInvitationInput } from './membership.schemas.js';
-import { EMAIL_SENDER, type EmailSender } from '../email/email-sender.js';
+import { EmailOutboxService } from '../email/email-outbox.service.js';
+import { auditEvents } from '../../infrastructure/database/schema/resources.schema.js';
 
 const missing = () =>
   new NotFoundException({
@@ -47,7 +47,7 @@ export class MembershipService {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     private readonly organizationsService: OrganizationService,
-    @Inject(EMAIL_SENDER) private readonly email: EmailSender,
+    private readonly outbox: EmailOutboxService,
   ) {}
 
   async list(userId: string, orgId: string) {
@@ -120,6 +120,14 @@ export class MembershipService {
         .values({ membershipId: target.id, roleId: nextRole.id });
       if (currentRole === 'OWNER')
         await this.organizationsService.assertActiveOwnerInvariant(tx, orgId);
+      await tx.insert(auditEvents).values({
+        organizationId: orgId,
+        actorUserId: actorId,
+        action: 'organization.member_role_changed',
+        resourceType: 'organization_membership',
+        resourceId: target.id,
+        metadata: { previousRole: currentRole, role: roleKey },
+      });
       return { ...target, role: roleKey };
     });
   }
@@ -151,6 +159,14 @@ export class MembershipService {
         .set({ status: 'suspended', updatedAt: new Date() })
         .where(eq(organizationMemberships.id, member.id));
       await this.organizationsService.assertActiveOwnerInvariant(tx, orgId);
+      await tx.insert(auditEvents).values({
+        organizationId: orgId,
+        actorUserId: actorId,
+        action: 'organization.member_left',
+        resourceType: 'organization_membership',
+        resourceId: member.id,
+        metadata: {},
+      });
       return { left: true };
     });
   }
@@ -232,29 +248,21 @@ export class MembershipService {
         })
         .returning();
       if (!created) throw new Error('Invitation insert returned no row');
+      await this.outbox.enqueue(tx, 'organization-invitation', {
+        recipient: email,
+        token: rawToken,
+        organizationName: org.name,
+      });
+      await tx.insert(auditEvents).values({
+        organizationId: orgId,
+        actorUserId: actorId,
+        action: 'organization.invitation_created',
+        resourceType: 'organization_invitation',
+        resourceId: created.id,
+        metadata: { role: input.role },
+      });
       return created;
     });
-    try {
-      await this.email.send({
-        to: email,
-        subject: 'Organization invitation',
-        text: `Invitation token: ${rawToken}`,
-      });
-    } catch {
-      await this.db
-        .update(organizationInvitations)
-        .set({ status: 'revoked', revokedAt: new Date() })
-        .where(
-          and(
-            eq(organizationInvitations.id, invitation.id),
-            eq(organizationInvitations.status, 'pending'),
-          ),
-        );
-      throw new ServiceUnavailableException({
-        code: 'SERVICE_UNAVAILABLE',
-        message: 'Invitation email could not be delivered',
-      });
-    }
     return {
       id: invitation.id,
       email: invitation.email,
@@ -306,6 +314,14 @@ export class MembershipService {
         )
         .returning();
       if (!row) throw missing();
+      await tx.insert(auditEvents).values({
+        organizationId: orgId,
+        actorUserId: userId,
+        action: 'organization.invitation_revoked',
+        resourceType: 'organization_invitation',
+        resourceId: invitationId,
+        metadata: {},
+      });
       return { revoked: true };
     });
   }
@@ -473,6 +489,14 @@ export class MembershipService {
           code: 'INVITATION_INVALID',
           message: 'Invitation is no longer available',
         });
+      await tx.insert(auditEvents).values({
+        organizationId: org.id,
+        actorUserId: userId,
+        action: 'organization.invitation_accepted',
+        resourceType: 'organization_membership',
+        resourceId: membershipId,
+        metadata: { invitationId: invitation.id, role: inviteRole.key },
+      });
       return { organizationId: org.id, membershipId, role: inviteRole.key };
     });
   }
@@ -512,6 +536,14 @@ export class MembershipService {
         .insert(membershipRoles)
         .values({ membershipId: target.id, roleId: owner.id });
       await this.organizationsService.assertActiveOwnerInvariant(tx, orgId);
+      await tx.insert(auditEvents).values({
+        organizationId: orgId,
+        actorUserId: actorId,
+        action: 'organization.ownership_transferred',
+        resourceType: 'organization_membership',
+        resourceId: target.id,
+        metadata: { previousOwnerMembershipId: actor.id },
+      });
       return { transferred: true, ownerMembershipId: target.id };
     });
   }
@@ -548,6 +580,14 @@ export class MembershipService {
         .set({ status: 'suspended', updatedAt: new Date() })
         .where(eq(organizationMemberships.id, target.id));
       await this.organizationsService.assertActiveOwnerInvariant(tx, orgId);
+      await tx.insert(auditEvents).values({
+        organizationId: orgId,
+        actorUserId: actorId,
+        action: 'organization.member_removed',
+        resourceType: 'organization_membership',
+        resourceId: target.id,
+        metadata: { role: targetRole },
+      });
       return { removed: true };
     });
   }

@@ -8,7 +8,14 @@ import type { Database } from '../src/infrastructure/database/database.types.js'
 import * as schema from '../src/infrastructure/database/schema/index.js';
 import { PasswordHasher } from '../src/modules/auth/password-hasher.js';
 import { AuthService } from '../src/modules/auth/auth.service.js';
-import { InMemoryEmailSender } from '../src/modules/email/email-sender.js';
+import {
+  InMemoryEmailSender,
+  type EmailSender,
+} from '../src/modules/email/email-sender.js';
+import {
+  AuditEventService,
+  EmailOutboxService,
+} from '../src/modules/email/email-outbox.service.js';
 import { JwtService } from '../src/modules/auth/jwt.service.js';
 import { SessionService } from '../src/modules/auth/session.service.js';
 import { ConfigService } from '@nestjs/config';
@@ -19,10 +26,12 @@ describe('account lifecycle against PostgreSQL', () => {
   let client: ReturnType<typeof postgres>;
   let database: Database;
   let email: InMemoryEmailSender;
+  let outbox: EmailOutboxService;
   let auth: AuthService;
   let sessions: SessionService;
 
-  const tokenFromLatestMessage = (): string => {
+  const tokenFromLatestMessage = async (): Promise<string> => {
+    await outbox.dispatchOnce();
     const message = email.messages.at(-1);
     const token = message?.text.match(/token: ([A-Za-z0-9_-]+)/)?.[1];
     if (!token) throw new Error('Email did not contain an account token');
@@ -40,7 +49,13 @@ describe('account lifecycle against PostgreSQL', () => {
     database = drizzle({ client, schema });
     await migrate(database, { migrationsFolder: './drizzle/migrations' });
     email = new InMemoryEmailSender();
-    auth = new AuthService(database, new PasswordHasher(), email);
+    outbox = new EmailOutboxService(database, email);
+    auth = new AuthService(
+      database,
+      new PasswordHasher(),
+      outbox,
+      new AuditEventService(),
+    );
     const config = new ConfigService<EnvironmentConfig>({
       NODE_ENV: 'test',
       APP_NAME: 'test',
@@ -67,11 +82,14 @@ describe('account lifecycle against PostgreSQL', () => {
       auth,
       new JwtService(config),
       config,
+      outbox,
+      new AuditEventService(),
     );
   }, 120000);
 
   beforeEach(async () => {
     await client`truncate table users cascade`;
+    await client`truncate table email_outbox, audit_events cascade`;
     email.messages.length = 0;
   });
 
@@ -87,13 +105,14 @@ describe('account lifecycle against PostgreSQL', () => {
     });
     expect(result.user.email).toBe('User@Example.com');
     expect(result.user).not.toHaveProperty('passwordHash');
-    expect(email.messages).toHaveLength(1);
+    expect(email.messages).toHaveLength(0);
+    expect(await database.select().from(schema.emailOutbox)).toHaveLength(1);
 
     const [stored] = await database.select().from(schema.users);
     expect(stored?.normalizedEmail).toBe('user@example.com');
     expect(stored?.passwordHash).not.toBe('correct horse battery staple');
 
-    const token = tokenFromLatestMessage();
+    const token = await tokenFromLatestMessage();
     await expect(auth.verifyEmail(token)).resolves.toEqual({ verified: true });
     await expect(auth.verifyEmail(token)).rejects.toMatchObject({
       response: { code: 'TOKEN_EXPIRED' },
@@ -124,7 +143,8 @@ describe('account lifecycle against PostgreSQL', () => {
     await expect(auth.forgotPassword('person@example.com')).resolves.toEqual({
       accepted: true,
     });
-    expect(email.messages).toHaveLength(before + 1);
+    await outbox.dispatchOnce();
+    expect(email.messages).toHaveLength(before + 2);
   });
 
   it('resets passwords once, rejects expired tokens, and permits long passphrases', async () => {
@@ -137,7 +157,7 @@ describe('account lifecycle against PostgreSQL', () => {
       'original long passphrase',
     );
     await auth.forgotPassword('reset@example.com');
-    const token = tokenFromLatestMessage();
+    const token = await tokenFromLatestMessage();
     await expect(
       auth.resetPassword(token, 'a much longer replacement passphrase'),
     ).resolves.toEqual({ reset: true });
@@ -158,7 +178,7 @@ describe('account lifecycle against PostgreSQL', () => {
     ).resolves.toHaveProperty('email', 'reset@example.com');
 
     await auth.forgotPassword('reset@example.com');
-    const expiredToken = tokenFromLatestMessage();
+    const expiredToken = await tokenFromLatestMessage();
     const expiredDigest = createHash('sha256')
       .update(expiredToken)
       .digest('hex');
@@ -181,6 +201,7 @@ describe('account lifecycle against PostgreSQL', () => {
         auth.resendVerification('disabled@example.com'),
       ),
     );
+    await outbox.dispatchOnce();
     expect(email.messages).toHaveLength(3);
     await database
       .update(schema.users)
@@ -229,6 +250,170 @@ describe('account lifecycle against PostgreSQL', () => {
     await expect(
       auth.authenticate('change@example.com', 'a replacement long passphrase'),
     ).resolves.toHaveProperty('email', 'change@example.com');
+    const [audit] = await database
+      .select()
+      .from(schema.auditEvents)
+      .where(eq(schema.auditEvents.action, 'auth.password_change'));
+    expect(audit).toMatchObject({
+      actorUserId: registered.user.id,
+      metadata: {},
+    });
+    const [notice] = await database
+      .select()
+      .from(schema.emailOutbox)
+      .where(eq(schema.emailOutbox.template, 'password-changed'));
+    expect(notice?.recipient).toBe('change@example.com');
+  });
+
+  it('sends a notice and writes an audit row when a saved session is revoked', async () => {
+    await auth.register({
+      email: 'revoke@example.test',
+      password: 'correct horse battery staple',
+    });
+    const session = await sessions.login(
+      'revoke@example.test',
+      'correct horse battery staple',
+    );
+    await expect(
+      sessions.revoke(session.user.id, session.sessionId),
+    ).resolves.toEqual({ revoked: true });
+    const [notice] = await database
+      .select()
+      .from(schema.emailOutbox)
+      .where(eq(schema.emailOutbox.template, 'security-session-revoked'));
+    expect(notice?.recipient).toBe('revoke@example.test');
+    const [event] = await database
+      .select()
+      .from(schema.auditEvents)
+      .where(eq(schema.auditEvents.action, 'auth.session_revoked'));
+    expect(event).toMatchObject({
+      actorUserId: session.user.id,
+      actorSessionId: session.sessionId,
+    });
+  });
+
+  it('leases a message to one dispatcher and marks bounded provider failures permanently', async () => {
+    await database.transaction((tx) =>
+      new AuditEventService().record(tx, {
+        action: 'test.safe_metadata',
+        metadata: {
+          operation: 'role_change',
+          accessToken: 'never persist',
+          nested: { passwordHash: 'never persist', count: 2 },
+        },
+      }),
+    );
+    const [safeAudit] = await database
+      .select()
+      .from(schema.auditEvents)
+      .where(eq(schema.auditEvents.action, 'test.safe_metadata'));
+    expect(safeAudit?.metadata).toEqual({
+      operation: 'role_change',
+      nested: { count: 2 },
+    });
+
+    await database.insert(schema.emailOutbox).values({
+      template: 'password-changed',
+      recipient: 'lease@example.test',
+      payload: { recipient: 'lease@example.test' },
+    });
+    let enterSend!: () => void;
+    let releaseSend!: () => void;
+    const entered = new Promise<void>((resolve) => {
+      enterSend = resolve;
+    });
+    const blocked = new Promise<void>((resolve) => {
+      releaseSend = resolve;
+    });
+    let sends = 0;
+    const slowSender: EmailSender = {
+      send: async () => {
+        sends += 1;
+        enterSend();
+        await blocked;
+      },
+    };
+    const slowOutbox = new EmailOutboxService(database, slowSender);
+    const firstDispatch = slowOutbox.dispatchOnce();
+    await entered;
+    await expect(slowOutbox.dispatchOnce()).resolves.toEqual({
+      claimed: 0,
+      sent: 0,
+      failed: 0,
+    });
+    releaseSend();
+    await expect(firstDispatch).resolves.toEqual({
+      claimed: 1,
+      sent: 1,
+      failed: 0,
+    });
+    expect(sends).toBe(1);
+
+    const failingOutbox = new EmailOutboxService(database, {
+      send: async () => {
+        throw new Error('provider unavailable with secret');
+      },
+    });
+    const failingAuth = new AuthService(
+      database,
+      new PasswordHasher(),
+      failingOutbox,
+      new AuditEventService(),
+    );
+    await failingAuth.register({
+      email: 'fail@example.test',
+      password: 'correct horse battery staple',
+    });
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      await database
+        .update(schema.emailOutbox)
+        .set({ nextAttemptAt: new Date(0) })
+        .where(eq(schema.emailOutbox.recipient, 'fail@example.test'));
+      await failingOutbox.dispatchOnce();
+    }
+    const [failed] = await database
+      .select()
+      .from(schema.emailOutbox)
+      .where(eq(schema.emailOutbox.recipient, 'fail@example.test'));
+    expect(failed).toMatchObject({
+      status: 'failed',
+      attemptCount: 8,
+      lastError: 'Error',
+    });
+    expect(failed?.lastError).not.toContain('secret');
+    await expect(
+      failingAuth.profile(
+        (
+          await database
+            .select()
+            .from(schema.users)
+            .where(eq(schema.users.normalizedEmail, 'fail@example.test'))
+        )[0]!.id,
+      ),
+    ).resolves.toHaveProperty('email', 'fail@example.test');
+    await expect(
+      database.select().from(schema.emailVerificationTokens),
+    ).resolves.toHaveLength(1);
+
+    await database.insert(schema.emailOutbox).values({
+      template: 'password-changed',
+      recipient: 'crashed@example.test',
+      payload: { recipient: 'crashed@example.test' },
+      status: 'processing',
+      attemptCount: 8,
+      nextAttemptAt: new Date(0),
+      lockedUntil: new Date(0),
+    });
+    await failingOutbox.dispatchOnce();
+    const [crashed] = await database
+      .select()
+      .from(schema.emailOutbox)
+      .where(eq(schema.emailOutbox.recipient, 'crashed@example.test'));
+    expect(crashed).toMatchObject({
+      status: 'failed',
+      attemptCount: 8,
+      lastError: 'RetryLimitExceeded',
+    });
   });
 
   it('retries concurrent rotation idempotently and revokes late replay with an audit event', async () => {

@@ -22,6 +22,9 @@ describe('environment configuration', () => {
       AUTH_REFRESH_TOKEN_KEY: '',
       AUTH_REFRESH_IDLE_DAYS: 14,
       AUTH_SESSION_MAX_DAYS: 30,
+      SMTP_PORT: 587,
+      SMTP_SECURE: false,
+      SMTP_TIMEOUT_MS: 10000,
     });
   });
 
@@ -32,6 +35,10 @@ describe('environment configuration', () => {
         AUTH_JWT_PRIVATE_KEY: 'private',
         AUTH_JWT_PUBLIC_KEY: 'public',
         AUTH_REFRESH_TOKEN_KEY: 'A'.repeat(43),
+        SMTP_HOST: 'mail.example.test',
+        SMTP_USER: 'mailer',
+        SMTP_PASSWORD: 'secret',
+        SMTP_FROM: 'noreply@example.test',
       }).API_DOCS_ENABLED,
     ).toBe(false);
     expect(
@@ -40,6 +47,10 @@ describe('environment configuration', () => {
         AUTH_JWT_PRIVATE_KEY: 'private',
         AUTH_JWT_PUBLIC_KEY: 'public',
         AUTH_REFRESH_TOKEN_KEY: 'A'.repeat(43),
+        SMTP_HOST: 'mail.example.test',
+        SMTP_USER: 'mailer',
+        SMTP_PASSWORD: 'secret',
+        SMTP_FROM: 'noreply@example.test',
         API_DOCS_ENABLED: 'true',
       }).API_DOCS_ENABLED,
     ).toBe(true);
@@ -48,6 +59,19 @@ describe('environment configuration', () => {
   it('requires configured asymmetric JWT keys in production', () => {
     expect(() => validateEnvironment({ NODE_ENV: 'production' })).toThrow(
       'AUTH_JWT_PRIVATE_KEY and AUTH_JWT_PUBLIC_KEY are required',
+    );
+  });
+
+  it('requires authenticated SMTP configuration in production', () => {
+    expect(() =>
+      validateEnvironment({
+        NODE_ENV: 'production',
+        AUTH_JWT_PRIVATE_KEY: 'private',
+        AUTH_JWT_PUBLIC_KEY: 'public',
+        AUTH_REFRESH_TOKEN_KEY: 'A'.repeat(43),
+      }),
+    ).toThrow(
+      'SMTP_HOST, SMTP_USER, SMTP_PASSWORD, and SMTP_FROM are required',
     );
   });
 

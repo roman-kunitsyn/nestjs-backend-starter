@@ -36,6 +36,17 @@ const EnvironmentInputSchema = z.object({
   ),
   AUTH_REFRESH_IDLE_DAYS: z.coerce.number().int().min(1).max(30).default(14),
   AUTH_SESSION_MAX_DAYS: z.coerce.number().int().min(1).max(90).default(30),
+  SMTP_HOST: z.string().trim().min(1).optional(),
+  SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
+  SMTP_SECURE: z.preprocess(
+    (value) => (value === 'true' ? true : value === 'false' ? false : value),
+    z.boolean().default(false),
+  ),
+  SMTP_USER: z.string().trim().min(1).optional(),
+  SMTP_PASSWORD: z.string().min(1).optional(),
+  SMTP_FROM: z.string().trim().email().optional(),
+  SMTP_TIMEOUT_MS: z.coerce.number().int().min(1000).max(120000).default(10000),
+  SMTP_CA_PEM: z.string().optional(),
 });
 
 export const EnvironmentSchema = EnvironmentInputSchema.transform((config) => ({
@@ -64,6 +75,17 @@ export function validateEnvironment(
     ) {
       throw new Error(
         'Invalid environment configuration: AUTH_REFRESH_TOKEN_KEY must contain at least 43 base64url characters in production',
+      );
+    }
+    if (
+      parsed.data.NODE_ENV === 'production' &&
+      (!parsed.data.SMTP_HOST ||
+        !parsed.data.SMTP_USER ||
+        !parsed.data.SMTP_PASSWORD ||
+        !parsed.data.SMTP_FROM)
+    ) {
+      throw new Error(
+        'Invalid environment configuration: SMTP_HOST, SMTP_USER, SMTP_PASSWORD, and SMTP_FROM are required in production',
       );
     }
     return parsed.data;
