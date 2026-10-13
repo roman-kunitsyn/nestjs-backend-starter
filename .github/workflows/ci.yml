@@ -72,7 +72,7 @@ jobs:
         run: pnpm image:build
 
       - name: Scan production image
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: nestjs-backend-starter:local
           format: table
