@@ -66,7 +66,7 @@ jobs:
               const runs = JSON.parse(data).workflow_runs ?? [];
               const valid = runs.some(run => run.event === "push" && run.status === "completed" &&
                 run.conclusion === "success" && run.head_sha === process.env.SOURCE_COMMIT &&
-                run.head_branch === `v${process.env.RELEASE_VERSION}`);
+                run.head_branch === "v" + process.env.RELEASE_VERSION);
               if (!valid) {
                 console.error("No successful tagged release workflow matches the requested version and source commit");
                 process.exit(1);
@@ -118,7 +118,6 @@ jobs:
       id-token: write
     timeout-minutes: 30
     env:
-      KUBECONFIG: ${{ runner.temp }}/kubeconfig
       KUBE_NAMESPACE: ${{ vars.KUBE_NAMESPACE || inputs.environment }}
       RELEASE_NAME: ${{ vars.HELM_RELEASE_NAME || 'nestjs-backend-starter' }}
     steps:
@@ -154,7 +153,7 @@ jobs:
               const runs = JSON.parse(data).workflow_runs ?? [];
               const valid = runs.some(run => run.event === "push" && run.status === "completed" &&
                 run.conclusion === "success" && run.head_sha === process.env.SOURCE_COMMIT &&
-                run.head_branch === `v${process.env.RELEASE_VERSION}`);
+                run.head_branch === "v" + process.env.RELEASE_VERSION);
               if (!valid) {
                 console.error("No successful tagged release workflow matches the requested version and source commit");
                 process.exit(1);
@@ -214,6 +213,11 @@ jobs:
       - name: Set up Helm
         if: ${{ !inputs.validation_only }}
         uses: azure/setup-helm@v4
+
+      - name: Initialize kubeconfig path
+        if: ${{ !inputs.validation_only }}
+        shell: bash
+        run: echo "KUBECONFIG=$RUNNER_TEMP/kubeconfig" >> "$GITHUB_ENV"
 
       - name: Configure cluster access
         if: ${{ !inputs.validation_only }}
@@ -281,10 +285,10 @@ jobs:
         run: |
           helm_revision="$(helm status "$RELEASE_NAME" --namespace "$KUBE_NAMESPACE" -o json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.stdout.write(String(JSON.parse(s).version)))')"
           ready="$(kubectl get deployment "${RELEASE_NAME}-nestjs-backend-starter" \
-            --namespace "$KUBE_NAMESPACE" -o json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s);process.stdout.write(`${d.status.readyReplicas ?? 0}/${d.status.updatedReplicas ?? 0} ready/updated`)})')"
+            --namespace "$KUBE_NAMESPACE" -o json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const d=JSON.parse(s);process.stdout.write((d.status.readyReplicas ?? 0)+"/"+(d.status.updatedReplicas ?? 0)+" ready/updated")})')"
           mkdir -p "$RUNNER_TEMP/deployment-record"
           HELM_REVISION="$helm_revision" READY_REPLICAS="$ready" \
-            node -e 'const fs=require("node:fs");fs.writeFileSync(process.argv[1],JSON.stringify({environment:process.env.TARGET_ENVIRONMENT,version:process.env.RELEASE_VERSION,sourceCommit:process.env.SOURCE_COMMIT,deployWorkflowCommit:process.env.GITHUB_SHA,image:`${process.env.IMAGE}@${process.env.IMAGE_DIGEST}`,helmRevision:Number(process.env.HELM_REVISION),migrationJob:process.env.MIGRATION_JOB,readyReplicas:process.env.READY_REPLICAS,smokeTest:"passed",completedAt:new Date().toISOString()},null,2)+"\n")' \
+            node -e 'const fs=require("node:fs");fs.writeFileSync(process.argv[1],JSON.stringify({environment:process.env.TARGET_ENVIRONMENT,version:process.env.RELEASE_VERSION,sourceCommit:process.env.SOURCE_COMMIT,deployWorkflowCommit:process.env.GITHUB_SHA,image:process.env.IMAGE+"@"+process.env.IMAGE_DIGEST,helmRevision:Number(process.env.HELM_REVISION),migrationJob:process.env.MIGRATION_JOB,readyReplicas:process.env.READY_REPLICAS,smokeTest:"passed",completedAt:new Date().toISOString()},null,2)+"\n")' \
             "$RUNNER_TEMP/deployment-record/deployment.json"
           {
             echo '### Deployment completed'
