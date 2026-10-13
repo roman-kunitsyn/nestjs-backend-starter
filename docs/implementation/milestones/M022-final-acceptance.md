@@ -11,7 +11,7 @@ Review and validate the complete implementation against every approved requireme
 ## Scope
 
 - Architecture consistency and maintainability review; auth, security, tenant isolation, DB/schema/migrations, API/OpenAPI, email/outbox, logging/health, container, Kubernetes and CI/CD verification.
-- Full automated suites and coverage gates; staging rollout/restore evidence; documentation/README and requirements matrix reconciliation.
+- Full automated suites and coverage gates; actual production-like staging rollout and managed PostgreSQL backup/PITR restore evidence; documentation/README and requirements matrix reconciliation.
 - Fix defects discovered during validation, record any non-blocking limitation and obtain required approval for any acceptance exception.
 
 ## Out of scope
@@ -32,7 +32,8 @@ Review and validate the complete implementation against every approved requireme
 - [ ] Every approved milestone/stage is completed; dependency, progress, and Git handoffs are consistent.
 - [ ] Every traceability matrix requirement has evidence; all mandatory quality/security/tenant checks pass.
 - [ ] No release-blocking defects remain; unresolved issues and impact are documented.
-- [ ] Actual staging deployment, migration behavior, probes, rollback, and backup restore are evidenced; no unsupported claims.
+- [ ] Actual production-like staging deployment is evidenced, including external secret delivery, TLS, migration behavior, healthy rollout/probes, smoke checks, and image rollback; no local kind/k3d result is represented as production evidence.
+- [ ] Managed PostgreSQL backup/PITR restore rehearsal is evidenced with recovery point, observed RPO/RTO, schema/migration validation, application smoke result, and operator. M020 isolated PostgreSQL restore checks do not satisfy this criterion.
 - [ ] Public API/OpenAPI match runtime; docs and README describe actual behavior.
 - [ ] Project is set to completed only after all evidence is recorded; final report includes completion summary.
 

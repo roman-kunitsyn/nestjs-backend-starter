@@ -2,9 +2,9 @@
 
 > Generated from `progress.json` by `pnpm progress:dashboard`. Do not edit by hand.
 
-**Project status:** blocked
+**Project status:** in_progress
 **Current stage:** Stage 09 — Production Deployment
-**Next milestone:** M020 — Helm and Kubernetes Operations (blocked)
+**Next milestone:** M021 — CI/CD and Release Safety (pending)
 
 ## Stage 00 — Preparation
 
@@ -28,7 +28,7 @@
 | 06 | Email and Audit | M015 | completed |
 | 07 | Example Resource | M016 | completed |
 | 08 | Security and Observability | M017–M018 | completed |
-| 09 | Production Deployment | M019–M021 | blocked |
+| 09 | Production Deployment | M019–M021 | in_progress |
 | 10 | Final Verification | M022 | pending |
 
 Stage 00 is completed. M004 validates tracking and execution readiness; M005 begins application implementation.

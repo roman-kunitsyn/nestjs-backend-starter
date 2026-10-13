@@ -45,6 +45,10 @@ Repositories handling tenant resources receive explicit organization scope and i
 
 PostgreSQL RLS is not required initially. Explain how it may be added as defense in depth. If adopted later, set tenant identity safely per transaction and ensure pooled connections cannot leak tenant context between requests.
 
+## Backup and restore verification
+
+Document managed PostgreSQL backup/PITR configuration, retention, encryption, access control, and explicit business-approved RPO/RTO. M020 verifies that the documented restore procedure works against a disposable isolated PostgreSQL instance using synthetic data, including migration-state validation, application smoke checks, elapsed recovery time, and observed data-loss window. This checks the reusable procedure and does not verify a managed provider's backup control plane or PITR behavior. M022 requires an actual managed PostgreSQL backup/PITR restore rehearsal and recorded evidence before project completion.
+
 ## Source truncation
 
 The reference ends §21.3 mid-sentence after “Repository methods handling organization resources must receive explicit tenant”. The enforceable requirement is nevertheless clear from §5.2 and the sentence's available beginning: repository methods receive explicit organization scope and apply it to tenant-owned operations. The missing continuation is unrecoverable and is not reconstructed; it contributes no additional known requirement.
